@@ -2,10 +2,9 @@
 
 [![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-fbab2c.svg)](CODE_OF_CONDUCT.md)
 
-
 ## About The Project
-This repo contains the specification of Agent Connect Protocol (ACP)
 
+This repo contains the specification of Agent Connect Protocol (ACP)
 
 ## Roadmap
 
@@ -23,4 +22,3 @@ appreciated**. For detailed contributing guidelines, please see
 
 Distributed under the `Apache License, Version 2.0` License. See [LICENSE](LICENSE) for more
 information.
-
