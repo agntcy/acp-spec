@@ -19,7 +19,7 @@ much longer to review, or result in it not being reviewed at all.
 
 ## Checklist
 
-- [ ] I have read the [contributing guidelines](/agntcy/repo-template/blob/main/CONTRIBUTING.md)
+- [ ] I have read the [contributing guidelines](/agntcy/acp-spec/blob/main/CONTRIBUTING.md)
 - [ ] Existing issues have been referenced (where applicable)
 - [ ] I have verified this change is not present in other open pull requests
 - [ ] Functionality is documented

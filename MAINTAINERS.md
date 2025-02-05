@@ -1,5 +1,4 @@
 # Maintainers
 
-- [GitHub Username](https://github.com/username)
-- [GitHub Username](https://github.com/username)
-- [GitHub Username](https://github.com/username)
+- [aduminuc](https://github.com/aduminuc) Alessandro Duminuco
+- [giconte](https://github.com/giconte) Giovanni Conte

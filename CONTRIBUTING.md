@@ -1,6 +1,6 @@
 # How to Contribute
 
-Thanks for your interest in contributing to `<project name>`! Here are a few
+Thanks for your interest in contributing to acp-spec! Here are a few
 general guidelines on contributing and reporting bugs that we ask you to review.
 Following these guidelines helps to communicate that you respect the time of the
 contributors managing and developing this open source project. In return, they
@@ -18,7 +18,7 @@ in any real-time space e.g., Slack, Discord, etc.
 
 Before reporting a new issue, please ensure that the issue was not already
 reported or fixed by searching through our [issues
-list](https://github.com/org_name/repo_name/issues).
+list](https://github.com/agntcy/acp-spec/issues).
 
 When creating a new issue, please be sure to include a **title and clear
 description**, as much relevant information as possible, and, if possible, a
@@ -39,7 +39,7 @@ major version release.
 
 ## Other Ways to Contribute
 
-We welcome anyone that wants to contribute to `<project name>` to triage and
+We welcome anyone that wants to contribute to `acp-spec` to triage and
 reply to open issues to help troubleshoot and fix existing bugs. Here is what
 you can do:
 
@@ -47,12 +47,12 @@ you can do:
   _[Reporting Issues](#reporting-issues)_ section, providing feedback to the
   issue's author on what might be missing.
 - Review and update the existing content of our
-  [Wiki](https://github.com/org_name/repo_name/wiki) with up-to-date
+  [Wiki](https://github.com/agntcy/acp-spec/wiki) with up-to-date
   instructions and code samples.
 - Review existing pull requests, and testing patches against real existing
-  applications that use `<project name>`.
+  applications that use `acp-spec`.
 - Write a test, or add a missing test case to an existing test.
 
-Thanks again for your interest on contributing to `<project name>`!
+Thanks again for your interest on contributing to `acp-spec`!
 
 :heart:

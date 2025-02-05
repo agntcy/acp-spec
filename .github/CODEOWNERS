@@ -1,6 +1,6 @@
 ####################################################
 #
-# List of approvers for <project-name> project
+# List of approvers for acp-spec project
 #
 #####################################################
 #
@@ -12,8 +12,8 @@
 # the repository. Unless a later match takes precedence,
 # the following users/teams will be requested for
 # review when someone opens a pull request.
-* @agntcy/<maintainer-team-name>
+* @agntcy/acp-spec-owners
 
 # Enforces admin protections for repo configuration via probot settings app.
 # ref: https://github.com/probot/settings#security-implications
-.github/settings.yml @agntcy/<admin-team-name>
+.github/settings.yml @agntcy/acp-spec-admins
