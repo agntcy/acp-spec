@@ -14,7 +14,7 @@ permissions: read-all
 jobs:
   mark-stale:
     # Call reusable workflow file
-    uses: agntcy/.github/.github/workflows/_stale.yml@main
+    uses: agntcy/github-reusable-workflows/.github/workflows/_stale.yml@main
     permissions:
       contents: read
       issues: write
