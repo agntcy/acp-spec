@@ -5,17 +5,13 @@ info:
 tags:
   - name: Agents
     description: >-
-      An agent represents an agent that can be configured and/or executed.
+      Agents are AI workflows that can be configured and/or executed on this server. 
+      This means that a client of this server can start a Run on any of the Agents supported by this server.
 
-      A Thread or a Stateless Run are started on one of the agent supported by
-      this server.
-
-      An agent defines an agent manifest.
-
+      Details of a supported agent are kept in an agent manifest.
       The agent manifest defines:
-        - the schemas for input, output, and configuration, providing examples of their instantiation.
-        - the interrupts that one could expect when running the agent, the data provided when these interrupts are triggered and the input needed to resume the execution after the interrupt.
-
+        - the schemas for configuration, input, output, and interrupts the agent expects or produces.
+      
       See `Agent` and `AgentManifest` models below for more info.
   - name: Runs
     description: >-
@@ -26,6 +22,19 @@ tags:
       Result from a run can be retrieved by polling or by blocking and waiting for the result.
 
       See `Run`  and `RunOutput` models below for more info.
+  - name: Threads
+    description: >-
+      If supported by the agent, Run can be grouped in Threads.
+      When a Run is created without specifying a Thread ID , a new thread is automatically created and a Thread ID is returned together with the created Run.
+      At the end of the Run, the server keeps a thread state associated to the thread.
+
+      When a Run is created specifying a Thread ID, the agent uses the previous state of the thread together with the provided input. 
+
+      A run can be created on a thread **only** if there is no run in the `pending` status on the same thread. 
+
+      Current thread state is accessible through this API.
+
+      See `Thread` for more info.
 paths:
   /agents/search:
     post:
@@ -33,7 +42,7 @@ paths:
         - Agents
       summary: Search Agents
       description: |-
-        Search for agents.
+        Returns a list of agents matching the criteria provided in the request.
 
         This endpoint also functions as the endpoint to list all agents.
       operationId: search_agents
@@ -52,7 +61,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Agent'
                 type: array
-                title: Response Search Agents Agents Search Post
+                title: Matching Agent List
         '422':
           description: Validation Error
           content:
@@ -131,6 +140,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /runs:
     post:
       tags:
@@ -383,6 +393,291 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /threads:
+    post:
+      tags:
+        - Threads
+      summary: Create an empty Thread
+      description: >-
+        Create an empty thread. This is useful to associate metadata to a thread.
+      operationId: create_thread
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThreadCreate'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thread'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /threads/search:
+    post:
+      tags:
+        - Threads
+      summary: Search Threads
+      description: |-
+        Search for threads.
+
+        This endpoint also functions as the endpoint to list all threads.
+      operationId: search_threads
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThreadSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Thread'
+                type: array
+                title: Response Search Agents Agents Search Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /threads/{thread_id}:
+    parameters:
+    - description: The ID of the thread.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        title: Thread ID
+        description: The ID of the thread.
+      name: thread_id
+      in: path
+
+    delete:
+      tags:
+        - Threads
+      summary: Delete a thread. If the thread contains any pending run, deletion fails.
+      description: >-
+        Delete a thread.
+      operationId: delete_thread
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thread'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Threads
+      summary: Get a previously created Thread
+      description: >-
+        Get a thread from its ID. 
+      operationId: get_thread
+
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thread'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /threads/{thread_id}/state:
+    get:
+      tags:
+        - Threads
+      summary: Retrieve the current state associated with the thread
+      description: >-
+        Retrieve the the current state associated with the thread
+      operationId: get_thread_state
+      parameters:
+      - description: The ID of the thread.
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Thread Id
+          description: The ID of the thread.
+        name: thread_id
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadStateSchema'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /threads/{thread_id}/history:
+    get:
+      tags:
+        - Threads
+      summary: Retrieve the list of runs and associated state at the end of each run.
+      description: >-
+        Retrieve ordered list of runs for this thread in chronological order.
+      operationId: get_thread_history
+      parameters:
+      - description: The ID of the thread.
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Thread Id
+          description: The ID of the thread.
+        name: thread_id
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Run'
+                type: array
+                title: List of runs for the specified thread
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /runs/{run_id}/threadstate:
+    get:
+      tags:
+        - Threads
+      summary: Retrieve the thread state at the end of the run
+      description: >-
+        This call can be used only for agents that support thread, i.e. for Runs that specify a thread ID.
+        It can be called only on runs that are in `success` status.
+        It returns the thread state at the end of the Run.
+        Can be used to reconstruct the evolution of the thread state in its history.
+      operationId: get_run_threadstate
+      parameters:
+      - description: The ID of the run.
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+          description: The ID of the run.
+        name: run_id
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadStateSchema'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 components:
   schemas:
@@ -492,6 +787,25 @@ components:
                       type: integer
                       format: int32
                       minimum: 0
+              thread_state:
+                type: object
+                description: >-
+                  This object contains an instance of an OpenAPI schema object, formatted
+                  as per the OpenAPI specs:
+                  https://spec.openapis.org/oas/v3.1.1.html#schema-object
+                example:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    age:
+                      type: integer
+                      format: int32
+                      minimum: 0              
               config:
                 type: object
                 description: >-
@@ -680,7 +994,7 @@ components:
         - type
         - image
         - protocol
-
+      
     AgentConnectProtocol:
       title: ACP Details
       description: ACP endpoint description
@@ -718,12 +1032,12 @@ components:
         name:
           type: string
           title: Name
-          description: Agent name to filter on.
+          description: Match all agents with the name specified.
         version:
           type: string
           title: Version
           description: >-
-            Agent version to filter on, formatted according to semantic
+            Match all agents with the version specified. Formatted according to semantic
             versioning (https://semver.org)
         limit:
           type: integer
@@ -755,6 +1069,11 @@ components:
           format: uuid
           title: Agent Id
           description: The ID of the agent.
+        thread_id:
+          type: string
+          format: uuid
+          title: Agent ID
+          description: Optional Thread ID wher the Run belongs to. This can be used only for agents supporting Threads.
         input:
           $ref: '#/components/schemas/InputSchema'
         metadata:
@@ -786,6 +1105,11 @@ components:
           format: uuid
           title: Agent Id
           description: The agent that was used for this run.
+        thread_id:
+          type: string
+          format: uuid
+          title: Agent ID
+          description: Optional Thread ID wher the Run belongs to. This is populated only for runs on agents agents supporting Threads.
         created_at:
           type: string
           format: date-time
@@ -814,7 +1138,7 @@ components:
           type: string
           format: uuid
           title: Agent Id
-          description: The agent that was used for this run.
+          description: Matches all the Runs associated with the specified Agent ID.
         status:
           type: string
           enum:
@@ -825,8 +1149,12 @@ components:
             - interrupted
           title: Status
           description: >-
-            The status of the run. One of 'pending', 'error', 'success',
+            Matches all the Runs associated with the specified status. One of 'pending', 'error', 'success',
             'timeout', 'interrupted'.
+        metadata:
+          type: object
+          title: Metadata Filter
+          description: Matches all threads for which metadata has  keys and values equal to those specified in this object.
         limit:
           type: integer
           title: Limit
@@ -918,6 +1246,10 @@ components:
       type: object
       title: Config
       description: The configuration for this agent. Schema is described in the agent spec under 'config'. If missing, default values are used.
+    ThreadStateSchema:
+      type: object
+      title: 'Thread State Schema'
+      description: The thread state. The Schema is described in the agent spec under 'thread_state'.
     InterruptPayloadSchema:
       type: object
       title: Interrupt Payload
@@ -948,3 +1280,65 @@ components:
           mapping:
             approval: '#/components/schemas/ApprovalResumePayload'
             question: '#/components/schemas/QuestionResumePayload'
+
+    ThreadCreate: 
+      type: object
+      title: Thread 
+      description: >-
+        Detail of an empty thread to be created.
+      properties:
+        agent_id:
+          type: string
+          title: Agent ID
+          description: Identifier of the agent this thread is executed on
+        metadata:
+          type: object
+          title: Metadata
+          description: Free form metadata for this thread
+    ThreadSearchRequest:
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+          title: Agent Id
+          description: Matches all threads associated with the specified agent ID.
+        metadata:
+          type: object
+          title: Metadata Filter
+          description: Matches all threads for which metadata has  keys and values equal to those specified in this object.
+        limit:
+          type: integer
+          title: Limit
+          description: Maximum number to return.
+          default: 10
+          minimum: 1
+          maximum: 1000
+        offset:
+          type: integer
+          title: Offset
+          description: Offset to start from.
+          default: 0
+          minimum: 0
+      type: object
+      title: Thread Search Request
+      description: Payload for listing runs.
+    Thread: 
+      type: object
+      title: Thread 
+      description: >-
+        Represents a collection of consecutive runs on an agent.
+        Thread is associated with a state
+      properties:
+        thread_id:
+          type: string
+          title: Thread ID
+          description: unique identifier of a thread
+        agent_id:
+          type: string
+          title: Agent ID
+          description: Identifier of the agent this thread is executed on
+        metadata:
+          type: object
+          title: Metadata
+          description: Free form metadata for this thread
+
