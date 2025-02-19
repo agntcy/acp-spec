@@ -1,0 +1,950 @@
+openapi: '3.0.3'
+info:
+  title: Agent Connect Protocol
+  version: '0.1'
+tags:
+  - name: Agents
+    description: >-
+      An agent represents an agent that can be configured and/or executed.
+
+      A Thread or a Stateless Run are started on one of the agent supported by
+      this server.
+
+      An agent defines an agent manifest.
+
+      The agent manifest defines:
+        - the schemas for input, output, and configuration, providing examples of their instantiation.
+        - the interrupts that one could expect when running the agent, the data provided when these interrupts are triggered and the input needed to resume the execution after the interrupt.
+
+      See `Agent` and `AgentManifest` models below for more info.
+  - name: Runs
+    description: >-
+      A Run represents an execution of an agent.
+
+      The output of a Run can be a final result or an interrupt.
+
+      Result from a run can be retrieved by polling or by blocking and waiting for the result.
+
+      See `Run`  and `RunOutput` models below for more info.
+paths:
+  /agents/search:
+    post:
+      tags:
+        - Agents
+      summary: Search Agents
+      description: |-
+        Search for agents.
+
+        This endpoint also functions as the endpoint to list all agents.
+      operationId: search_agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Agent'
+                type: array
+                title: Response Search Agents Agents Search Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /agents/{agent_id}:
+    get:
+      tags:
+        - Agents
+      summary: Get Agent
+      description: Get an agent by ID.
+      operationId: get_agent_by_ID
+      parameters:
+        - description: The ID of the agent.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Agent Id
+            description: The ID of the agent.
+          name: agent_id
+          in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /agents/{agent_id}/manifest:
+    get:
+      tags:
+        - Agents
+      summary: Get Agent Manifest from its id
+      description: Get an agent manifest by agent ID.
+      operationId: get_agent_manifest_by_id
+      parameters:
+        - description: The ID of the agent.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Agent Id
+            description: The ID of the agent.
+          name: agent_id
+          in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentManifest'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /runs:
+    post:
+      tags:
+        - Runs
+      summary: Create Background Run
+      description: >-
+        Create a run, return the run descriptor immediately. Don't wait
+        for the final run output.
+      operationId: create_run
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunCreate'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /runs/search:
+    post:
+      tags:
+        - Runs
+      summary: Search Runs
+      description: |-
+        Search for runs.
+
+        This endpoint also functions as the endpoint to list all runs.
+      operationId: search_runs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Run'
+                type: array
+                title: Response Search Agents Agents Search Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /runs/{run_id}:
+    parameters:
+    - description: The ID of the agent.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        title: Run Id
+        description: The ID of the run.
+      name: run_id
+      in: path
+    post:
+      tags:
+        - Runs
+      summary: Resume an interrupted Run
+      description: >-
+        Provide the needed input to a run to resume its execution.
+        Can only be called for runs that are in the interrupted state
+        Schema of the provided input must match with the schema specified in the agent specs under interrupts for the interrupt type the agent generated for this specific interruption.
+      operationId: resume_run
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumePayloadSchema'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Runs
+      summary: Delete a run. If running, cancel and then delete.
+      description: >-
+        Cancel a run.
+      operationId: delete_run
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Runs
+      summary: Get a previously created Run
+      description: >-
+        Get a run from its ID. Don't wait
+        for the final run output.
+      operationId: get_run
+
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /runs/{run_id}/output:
+    get:
+      tags:
+        - Runs
+      summary: Retrieve last output of a run if available
+      description: >-
+        Retrieve the last output of the run. 
+        The output can be:
+          * an interrupt, this happens when the agent run status is `interrupted`
+          * the final result of the run, this happens when the agent run status is `success`
+          * an error, this happens when the agent run status is `error` or `timeout`
+
+        
+        If the block timeout is provided and the current run status is `pending`, this call blocks until the state changes or the timeout expires. 
+        
+        If no timeout is provided or the timeout has expired and  run status is `pending`, this call returns `204` with no content.
+
+      operationId: get_run_output
+      parameters:
+      - description: The ID of the run.
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+          description: The ID of the run.
+        name: run_id
+        in: path
+      - name: block_timeout
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Block Timeout
+          description: In case the run status is `pending`, this call blocks until the status change or `timeout` seconds have passed.
+      responses:
+        '204':
+          description: No Output Available
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunOutput'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  schemas:
+    Agent:
+      title: Agent
+      description: A description of an agent supported by this server
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+          title: Agent Id
+          description: Unique identifier of the agent in this server.
+        metadata:
+          $ref: '#/components/schemas/AgentMetadata'
+      required:
+        - agent_id
+        - metadata
+    AgentMetadata:
+      title: Agent Metadata
+      description: Basic information associated to the agent
+      type: object
+      properties:
+        ref:
+          $ref: '#/components/schemas/AgentManifestRef'
+        description:
+          description: >-
+            Description of this agent, which should include what the intended
+            use is, what tasks it accomplishes and how uses input and configs to
+            produce the output and any other side effect
+          title: Description
+          type: string
+      required:
+        - ref
+        - description
+    AgentManifestRef:
+      title: Agent Manifest Reference
+      description: Reference to an Agent Manifest, it includes name, version and a locator.
+      type: object
+      properties:
+        name:
+          description: Name of the agent that identifies the agent in its manifest
+          title: Name
+          type: string
+        version:
+          description: >-
+            Version of the agent in its manifest. Should be formatted according
+            to semantic versioning (https://semver.org)
+          title: Version
+          type: string
+        url:
+          title: Manifest URL
+          description: URL of the manifest. Can be a network location or a file.
+          type: string
+          format: uri
+      required:
+        - name
+        - version
+    AgentManifest:
+      title: Agent Manifest
+      description: Describe all the details of an agent, including how to use, how to deploy and its dependencies.
+      type: object
+      properties:
+          metadata:
+            $ref: '#/components/schemas/AgentMetadata'
+          specs:
+            title: Agent Specs
+            description: >-
+              Specification of agent capabilities, config, input, output, and interrupts
+            type: object
+            properties:
+              input:
+                type: object
+                description: >-
+                  This object contains an instance of an OpenAPI schema object, formatted
+                  as per the OpenAPI specs:
+                  https://spec.openapis.org/oas/v3.1.1.html#schema-object
+                example:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    age:
+                      type: integer
+                      format: int32
+                      minimum: 0
+              output:
+                type: object
+                description: >-
+                  This object contains an instance of an OpenAPI schema object, formatted
+                  as per the OpenAPI specs:
+                  https://spec.openapis.org/oas/v3.1.1.html#schema-object
+                example:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    age:
+                      type: integer
+                      format: int32
+                      minimum: 0
+              config:
+                type: object
+                description: >-
+                  This object contains an instance of an OpenAPI schema object, formatted
+                  as per the OpenAPI specs:
+                  https://spec.openapis.org/oas/v3.1.1.html#schema-object
+                example:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    age:
+                      type: integer
+                      format: int32
+                      minimum: 0
+              interrupts:
+                type: array
+                description: List of possible interrupts that can be provided by the agent. If this is missing or contains an empty array, it means that the agent does not support interrupt.
+                items:
+                  type: object
+                  properties:
+                    interrupt_type:
+                      description: >-
+                        Name of this interrupt type. Needs to be unique in the
+                        list of interrupts.
+                      title: Interrupt Type Name
+                      type: string
+                    interrupt_payload:
+                      type: object
+                      description: >-
+                        This object contains an instance of an OpenAPI schema object, formatted
+                        as per the OpenAPI specs:
+                        https://spec.openapis.org/oas/v3.1.1.html#schema-object
+                      example:
+                        type: object
+                        required:
+                          - name
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          age:
+                            type: integer
+                            format: int32
+                            minimum: 0
+                    resume_payload:
+                      type: object
+                      description: >-
+                        This object contains an instance of an OpenAPI schema object, formatted
+                        as per the OpenAPI specs:
+                        https://spec.openapis.org/oas/v3.1.1.html#schema-object
+                      example:
+                        type: object
+                        required:
+                          - name
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          age:
+                            type: integer
+                            format: int32
+                            minimum: 0
+                  required: ["interrupt_type", "resume_payload", "resume_input"]
+            required:
+              - input
+              - output
+              - config
+          dependencies:
+            title: Agent Dependencies
+            description: List of all other agents this agent depends on
+            type: array
+            items:
+                $ref: '#/components/schemas/AgentManifestRef'
+          deployments:
+            title: Deployment Options
+            description: >-
+              List of possible methods to instantiate or consume the agent. 
+              Any of the available option could be used.
+              
+              Every option could be associated with a unique name within this agent.
+              If present, when another manifest refers to this manifest, it can also select the preferred deployment option.
+            type: array
+            items:
+              oneOf:
+              - $ref: '#/components/schemas/SourceCodeDeployment'
+              - $ref: '#/components/schemas/RemoteServiceDeployment'
+              - $ref: '#/components/schemas/DockerDeployment'
+              discriminator:
+                propertyName: type
+                mapping:
+                  source_code: '#/components/schemas/SourceCodeDeployment'
+                  remote_service: '#/components/schemas/RemoteServiceDeployment'
+                  docker: '#/components/schemas/DockerDeployment'
+      required:
+        - metadata
+        - specs
+    SourceCodeDeployment:
+      title: Source Code Deployment
+      description: Describes the source code where the agent is available. It specifies also the type of deployer that it supports.
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['source_code']
+        name:
+          type: string
+          title: Deployment Option Name
+          description: Name this deployment option is referred to within this agent. This is needed to indicate which one is preferred when this manifest is referred. Can be omitted, in such case selection is not possible.
+        url:
+          title: Source Code Locator
+          description: Location of the source code. E.g. path to code root, github repo url etc.
+          type: string
+          format: uri
+        framework_config:
+          oneOf:
+            - $ref: '#/components/schemas/LangGraphConfig'
+            - $ref: '#/components/schemas/LlamaIndexConfig'
+          discriminator:
+            propertyName: framework_type
+            mapping:
+              'langgraph': '#/components/schemas/LangGraphConfig'
+              'llamaindex': '#/components/schemas/LlamaIndexConfig'
+      required:
+        - type
+        - url
+        - framework_config
+    LangGraphConfig:
+      title: Langgraph Config
+      description: Describes langgraph based agent deployment config
+      type: object
+      properties:
+        framework_type:
+          type: string
+          enum: ['langgraph']
+        graph:
+          type: string
+      required: ["framework_type", "graph"]
+    LlamaIndexConfig:
+      title: Llamaindex Config
+      description: Describes llamaindex based agent deployment config
+      type: object
+      properties:
+        framework_type:
+          type: string
+          enum: ['llamaindex']
+        path:
+          type: string
+      required: ["framework_type", "path"]
+
+        
+    RemoteServiceDeployment:
+      title: Remote Service
+      description: Describes the network endpoint where the agent is available
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['remote_service']
+        protocol:
+          $ref: '#/components/schemas/AgentConnectProtocol'
+      required:
+        - type
+        - protocol
+    DockerDeployment:
+      title: Docker Deployment
+      description: Describes the docker deployment for this agent
+      properties:
+        type:
+          type: string
+          enum: ['docker']
+        image:
+          title: Agent Docker image
+          description: Container image for the agent
+          type: string
+          format: uri
+        protocol:
+          $ref: '#/components/schemas/AgentConnectProtocol'
+      required:
+        - type
+        - image
+        - protocol
+
+    AgentConnectProtocol:
+      title: ACP Details
+      description: ACP endpoint description
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ACP]
+        url:
+          title: ACP URL
+          description: URL pointing to the ACP endpoint root.
+          type: string
+          format: uri
+        agent_id:
+          title: Agent identifier
+          type: string
+          description: Agent identifier in ACP server. If missing, the first returned agent with matching name and version should be used.
+          format: uuid
+        authentication:
+            $ref: '#/components/schemas/SecurityScheme'
+      required:
+        - type
+        - url
+    SecurityScheme:
+      type: object
+      description: >-
+        This object contains an instance of an OpenAPI schema object, formatted
+        as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#security-scheme-object-0
+      example:
+        type: apiKey
+        name: api-key
+        in: header
+    AgentSearchRequest:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Agent name to filter on.
+        version:
+          type: string
+          title: Version
+          description: >-
+            Agent version to filter on, formatted according to semantic
+            versioning (https://semver.org)
+        limit:
+          type: integer
+          title: Limit
+          description: Maximum number to return.
+          default: 10
+          minimum: 1
+          maximum: 1000
+        offset:
+          type: integer
+          title: Offset
+          description: Offset to start from.
+          default: 0
+          minimum: 0
+      type: object
+      title: AgentSearchRequest
+      description: Payload for listing agents.
+    ErrorResponse:
+      type: string
+      title: ErrorResponse
+      description: Error message returned from the server
+    RunCreate:
+      type: object
+      title: Agent Run Creation
+      description: Payload for creating a run.
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+          title: Agent Id
+          description: The ID of the agent.
+        input:
+          $ref: '#/components/schemas/InputSchema'
+        metadata:
+          type: object
+          title: Metadata
+          description: Metadata to assign to the run. Optional free format metadata to attach to the run.
+        config:
+          $ref: '#/components/schemas/ConfigSchema'
+        webhook:
+          type: string
+          format: uri
+          title: Completion or Interrupt webhook
+          description: Webhook to call after run finishes or interrupts. If missing no callback is called and the client needs to poll.
+      required:
+        - agent_id
+    Run:
+      title: Agent Run
+      description: Holds all the information of a run
+      properties:
+        creation:
+          $ref: '#/components/schemas/RunCreate'
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: The ID of the run.
+        agent_id:
+          type: string
+          format: uuid
+          title: Agent Id
+          description: The agent that was used for this run.
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: The time the run was created.
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: The last time the run was updated.
+        status:
+          type: string
+          enum:
+            - pending
+            - error
+            - success
+            - timeout
+            - interrupted
+          title: Status
+          description: >-
+            The status of the run. One of 'pending', 'error', 'success',
+            'timeout', 'interrupted'.
+    RunSearchRequest:
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+          title: Agent Id
+          description: The agent that was used for this run.
+        status:
+          type: string
+          enum:
+            - pending
+            - error
+            - success
+            - timeout
+            - interrupted
+          title: Status
+          description: >-
+            The status of the run. One of 'pending', 'error', 'success',
+            'timeout', 'interrupted'.
+        limit:
+          type: integer
+          title: Limit
+          description: Maximum number to return.
+          default: 10
+          minimum: 1
+          maximum: 1000
+        offset:
+          type: integer
+          title: Offset
+          description: Offset to start from.
+          default: 0
+          minimum: 0
+      type: object
+      title: Run Search Request
+      description: Payload for listing runs.
+
+    RunOutput:
+      title: Run Output
+      description: Output of a Run. Can be the final result or an interrupt.
+      oneOf:
+        - $ref: '#/components/schemas/RunResult'
+        - $ref: '#/components/schemas/RunInterrupt'
+        - $ref: '#/components/schemas/RunError'
+      discriminator:
+        propertyName: type
+        mapping:
+          result: '#/components/schemas/RunResult'
+          interrupt: '#/components/schemas/RunInterrupt'
+          error: '#/components/schemas/RunError'
+    RunResult:
+      title: Run Result
+      description: Final result of a Run.
+      type: object
+      properties:
+        type:
+              title: Output Type
+              type: string
+              enum: ["result"]
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: The ID of the run.
+        result:
+            $ref: '#/components/schemas/OutputSchema'
+    RunError:
+      title: Run Error
+      description: Run terminated with an error
+      type: object
+      properties:
+        type:
+              title: Output Type
+              type: string
+              enum: ["error"]
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: The ID of the run.
+        errcode:
+          type: integer
+          title: Error Code
+          description: code of the error
+        description:
+          type: string
+          title: Error Description
+          description: description of the error
+    RunInterrupt:
+      title: Run Interrupt
+      description: Interrupt occurred during a Run
+      type: object
+      properties:
+        type:
+          title: Output Type
+          type: string
+          enum: ["interrupt"]
+        interrupt:
+          $ref: '#/components/schemas/InterruptPayloadSchema'
+    InputSchema:
+      type: object
+      title: 'Input Schema'
+      description: The output of the graph. Schema is described in the agent spec under 'input'.
+    OutputSchema:
+      type: object
+      title: 'Output Schema'
+      description: The input to the graph. Schema is described in the agent spec under 'output'.
+    ConfigSchema:
+      type: object
+      title: Config
+      description: The configuration for this agent. Schema is described in the agent spec under 'config'. If missing, default values are used.
+    InterruptPayloadSchema:
+      type: object
+      title: Interrupt Payload
+      description: >-
+        This schema describes the interrupt payload. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`.
+        The discriminator is the `interrupt_type`, while the schemas will be the ones defined in the agent spec under `interrupts`/`interrupt_payload`
+        For example:        
+        oneOf:
+          - $ref: '#/components/schemas/ApprovalInterruptPayload'
+          - $ref: '#/components/schemas/QuestionInterruptPayload'
+        discriminator:
+          propertyName: interruput_type
+          mapping:
+            approval: '#/components/schemas/ApprovalInterruptPayload'
+            question: '#/components/schemas/QuestionInterruptPayload'
+    ResumePayloadSchema:
+      type: object
+      title: Resume Payload Schema
+      description: >-
+        This schema describes the resume payload after an interrupt. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`.
+        The discriminator is the `interrupt_type`, while the schemas will be those defined in the agent spec under `interrupts`/`resume_payload`
+        For example:        
+        oneOf:
+          - $ref: '#/components/schemas/ApprovalResumePayload'
+          - $ref: '#/components/schemas/QuestionResumePayload'
+        discriminator:
+          propertyName: interrupt_type
+          mapping:
+            approval: '#/components/schemas/ApprovalResumePayload'
+            question: '#/components/schemas/QuestionResumePayload'
