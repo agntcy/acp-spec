@@ -7,6 +7,8 @@
 
 This repo contains the specification of Agent Connect Protocol (ACP)
 
+See [API Reference](https://agntcy.github.io/acp-spec/openapi.html) 
+
 ## Roadmap
 
 See the [open issues](https://github.com/agntcy/acp-spec/issues) for a list
