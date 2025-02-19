@@ -7,6 +7,12 @@
 
 This repo contains the specification of Agent Connect Protocol (ACP)
 
+Agent Connect Protocol defines a standard interface to invoke and configure agents.
+
+[docs](https://agntcy.github.io/acp-spec)
+[ACP Principles and Requirements](https://docs.agntcy.org/pages/connect.html)
+[Spec](https://agntcy.github.io/acp-spec/openapi.html)
+
 See [API Reference](https://agntcy.github.io/acp-spec/openapi.html) 
 
 ## Roadmap
