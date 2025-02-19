@@ -13,7 +13,7 @@ Agent Connect Protocol defines a standard interface to invoke and configure agen
 * [Documentation](https://agntcy.github.io/acp-spec)
 * [ACP Principles and Requirements](https://docs.agntcy.org/pages/connect.html)
 * [Specification](openapi.yaml)
-* [API Reference](https://agntcy.github.io/acp-spec/openapi.html)
+* [API Reference](https://agntcy.github.io/acp-spec/docs/openapi.html)
 
  
 
