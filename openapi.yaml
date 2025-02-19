@@ -749,6 +749,26 @@ components:
               Specification of agent capabilities, config, input, output, and interrupts
             type: object
             properties:
+              capabilities:
+                type: object
+                title: Agent Capabilities
+                description: Declares what invocation features this agent is capable of.
+                properties:
+                  threads:
+                    type: boolean
+                    title: Thread Support
+                    default: false
+                    description: this is True if the agent supports run threads. If this is False, then the threads tagged with `Threads` are not available. If missing, it means `false`
+                  interrupts:
+                    type: boolean
+                    title: Interrupt Support
+                    default: false
+                    description: this is True if the agent runs can interrupt to request additional input and can be subsequently resumed. If missing, it means `false`
+                  callbacks:
+                    type: boolean
+                    title: Callback Support
+                    default: false
+                    description: this it True if the agent supports a webhook to report run results. If this is false, providing a `webhook` at run creation has no effect. If missing, it means `false`
               input:
                 type: object
                 description: >-
@@ -790,6 +810,9 @@ components:
               thread_state:
                 type: object
                 description: >-
+                  This describes the format of ThreadState. 
+                  Cannot be specified if `threads` capability is false.
+                  If not specified, when `threads` capability is true, then the API to retrieve ThreadState from a Thread or a Run is not available.
                   This object contains an instance of an OpenAPI schema object, formatted
                   as per the OpenAPI specs:
                   https://spec.openapis.org/oas/v3.1.1.html#schema-object
@@ -827,7 +850,7 @@ components:
                       minimum: 0
               interrupts:
                 type: array
-                description: List of possible interrupts that can be provided by the agent. If this is missing or contains an empty array, it means that the agent does not support interrupt.
+                description: List of possible interrupts that can be provided by the agent. If `interrupts` capability is true, this needs to have at least one item.
                 items:
                   type: object
                   properties:
@@ -877,6 +900,7 @@ components:
                             minimum: 0
                   required: ["interrupt_type", "resume_payload", "resume_input"]
             required:
+              - capabilities
               - input
               - output
               - config
