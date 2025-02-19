@@ -11,7 +11,7 @@ repository:
   description: Agent Connect Protocol Spec
 
   # A URL with more information about the repository
-  homepage: https://agntcy.ai
+  homepage: https://agntcy.org
 
   # A comma-separated list of topics to set on the repository
   topics: github, probot
