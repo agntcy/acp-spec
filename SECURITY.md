@@ -1,7 +1,7 @@
 # Security Policies and Procedures
 
 This document outlines security procedures and general policies for the
-`acp-spec` project.
+`acp-sec` project.
 
 - [Security Policies and Procedures](#security-policies-and-procedures)
   - [Disclosing a security issue](#disclosing-a-security-issue)
@@ -10,12 +10,12 @@ This document outlines security procedures and general policies for the
 
 ## Disclosing a security issue
 
-The `acp-spec` maintainers take all security issues in the project
-seriously. Thank you for improving the security of `acp-spec`. We
+The `acp-sec` maintainers take all security issues in the project
+seriously. Thank you for improving the security of `acp-sec`. We
 appreciate your dedication to responsible disclosure and will make every effort
 to acknowledge your contributions.
 
-`acp-spec` leverages GitHub's private vulnerability reporting.
+`acp-sec` leverages GitHub's private vulnerability reporting.
 
 To learn more about this feature and how to submit a vulnerability report,
 review [GitHub's documentation on private reporting](https://docs.github.com/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
@@ -30,6 +30,10 @@ Here are some helpful details to include in your report:
 A maintainer will acknowledge the report within three (3) business days, and
 will send a more detailed response within an additional three (3) business days
 indicating the next steps in handling your report.
+
+If you've been unable to successfully draft a vulnerability report via GitHub or
+have not received a response during the alloted response window, please reach out via
+[security@agntcy.org](mailto:security@agntcy.org) contact email.
 
 After the initial reply to your report, the maintainers will endeavor to keep
 you informed of the progress towards a fix and full announcement, and may ask
