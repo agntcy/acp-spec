@@ -19,6 +19,7 @@ ACP offers an API to search for the agents served by the ACP server.
 Once a client has an agent identifier `AgentID`, it can use it to either retreive the agent manifest or to control agent runs.
 
 #### Retrieve all agents supported by the server
+In this case the client is doing a search of all agents in the server without specifying any search filter. Results is a list of agents.
 
 ```mermaid
 sequenceDiagram
@@ -29,16 +30,18 @@ sequenceDiagram
 ```
 
 #### Retrieve an agent from its name and version
+In this case the client known name and version of an agent (e.g. learnt from the manifest) and wants to retrieve its `id` to interact with the agent.
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     C->>+S: POST /agents/search <br/>{"name":"smart-agent", "version": "0.1.3"}
-    S->>-C: AgentList = [{id="...", metadata="..."}]
+    S->>-C: AgentList = [{id, metadata}]
 ```
 
 #### Retrieve agent manifest from its identifier
+In this case the client known the agent id and wants to retrieve its manifest to learn about the capabilities supported and the data scehmas to use.
 
 ```mermaid
 sequenceDiagram
@@ -51,21 +54,38 @@ sequenceDiagram
 ### Runs
 A run is a single execution of an agent.
 
-#### Starting a Run of an Agent
+#### Starting a Run of an Agent and polling for completion
+In this case, the clients starts a background run of an agent,  keeps polling the server until the run is complete, finally it retrieves the run output.
+
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     C->>+S: POST /runs {agent_id, input, config, metadata}
-    S->>-C: Run={run_id, ...}
+    S->>-C: Run={run_id, status="pending"}
+    loop Until run["status"] == "pending"
+    C->>+S: GET /runs/{run_id}
+    S->>-C: Run={run_id, status}
+    end
+    C->>+S: GET /runs/{run_id}/output
+    S->>-C: RunOutput={type="result", result}
 ```
-In the sequence above the client is requesting a run to the server on a specific agent, providing the `agent_id`, and specifying:
-* configuration: a run configuration is flavoring the behavior of this agent for this run
-* input: run input provides the data the agent will operate on
-* metadata: metadata is a free format object that can be used by the client to tag the run with arbitrary information
+In the sequence above"
+1. The client requests to start a run on a specific agent, providing its `agent_id`, and specifying:
+    * configuration: a run configuration is flavoring the behavior of this agent for this run
+    * input: run input provides the data the agent will operate on
+    * metadata: metadata is a free format object that can be used by the client to tag the run with arbitrary information
+1. The server returns a run object which include the run identifier and a status, which at the beginning will be `pending`.
+1. The client retrieves the status of the run until completion
+1. The server returns the run object with the updated status
+1. The client request the outout of the run
+1. The server return the final result of the run.
 
-Note that the format of the input and the configuration are not specified by ACP, but they are defined in the agent manifest.
+> [!NOTE]  
+> Note that the format of the input and the configuration are not specified by ACP, but they are defined in the agent manifest.
+
+#### Start a Run of an Agent and Pol
 
 ### Thread Runs
 
