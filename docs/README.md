@@ -107,6 +107,8 @@ In the sequence above:
 
 
 #### Start a Run of an Agent with a callback
+Agents can support callbacks, i.e. asynchronously call back the client upon run status change. The support for interrupts is signalled in the agent manifest.
+
 In this case, the clients starts a background run of an agent and provide a callback to be called upon completion.
 
 ```mermaid
@@ -127,7 +129,7 @@ In the sequence above:
 1. The server return the final result of the run.
 
 ### Run Interrupt and Resume
-Agent can support interrupts, i.e. the run execution can interrupt to request additional input to the client.
+Agent can support interrupts, i.e. the run execution can interrupt to request additional input to the client. The support for interrupts is signalled in the agent manifest.
 
 When an interrupt occurs, the server provides the client with an interrupt payload, which specifies the interrupt type that have occurred and all the information associated with that interrupt, i.e a request for additional input.
 
@@ -139,7 +141,7 @@ The client can collect the needed iput for the specific interrupt and resume the
 
 The interrput is provided by the server when the client requests the output.
 
-### Start an Run and resume it upon interruption
+### Start a run and resume it upon interruption
 
 In this case, the client asks for the agent output and receives and interrupt intead of the final output. The client then resumes the run providing the needed input and finally when run is completed, gets the result.
 
@@ -166,9 +168,56 @@ In the sequence above:
 1. the client requests the output
 1. The server returns the final result.
 
-
 ### Thread Runs
+Agents can support thread run. Support for thread run is signalled in the agent manifest.
 
+When an agent supports thread run, each run is associated to a thread, and at the end of the run a thread state is kept in the server.
+
+Subsequent runs on the same thread use the previously created state, together with the run input provided.
+
+The server offers ways to retrieve the current thread state and the history of the runs on a thread and the evolution of the thread states over execution of runs.
+
+>  
+> Note that the format of the thread state is not specified by ACP, but it is (optionally) defined in the agent manifest. If specified, it can be retrieved by the client, if not it's not accessible to the client.
+>
+
+### Start of multiple runs over the same thread
+In this case the client starts a sequence of runs on the same threads accumulating a state in the server. In this specific example the input is a chat message, while the state kept in the server is the chat history.
+
+```mermaid
+sequenceDiagram
+    participant C as ACP Client
+    participant S as ACP Server
+    rect rgb(240,240,240)
+    C->>+S: POST /runs {agent_id, message="Hello, my name is John?", config, metadata}
+    S->>-C: Run={run_id, status="pending", thread_id}
+    C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
+    S->>-C: RunOutput={type="result", result={"message"="Hello John, how can I help?"}}  
+    end
+    note right of S: state=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>]
+    rect rgb(240,240,240)
+    C->>+S: POST /runs {agent_id, message="Can you remind my name?", config, metadata, thread_id}
+    S->>-C: Run={run_id, status="pending", thread_id}
+    C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
+    S->>-C: RunOutput={type="result", result={"message"="Yes, your name is John"}}  
+    end
+    note right of S: state=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>"Can you remind my name?",<br/>"Yes, your name is John"<br/>]
+    C->>+S: GET /threads/{thread_id}/state {thread_id}
+    S->>-C: ThreadState=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>"Can you remind my name?",<br/>"Yes, your name is John"<br/>]
+```
+In the sequence above:
+1. The client starts the first run and provides the first message of the chat
+1. The server return the run object which **includes a thread ID** because the server supports threaded runs
+1. The client requests the run output
+1. The server returns the run output which is the next chat message from the agent and leaves a state with the current chat history.
+1. The client starts a new run providing:
+    * the same thread ID, which means that the run will use the existing state associated with the thread
+    * the input for the run, i.e. the next message in the chat (assuming the existence of the server of the chat history)
+1. The server start the runs using the existing chat history and returns the run object
+1. The client requests the run output
+1. The server update the thread state and returns the run output
+1. Finally, the client requests the thread state (this is an optional operation)
+1. The server returns the current thread state which collect the whole chat history
 
 ## Agent Manifest
 [TBD]
