@@ -9,13 +9,19 @@ This repo contains the specification of Agent Connect Protocol (ACP)
 
 Agent Connect Protocol defines a standard interface to invoke and configure agents.
 
+## Getting Started
 
-* [Documentation](https://agntcy.github.io/acp-spec)
-* [ACP Principles and Requirements](https://docs.agntcy.org/pages/connect.html)
-* [Specification](openapi.yaml)
-* [API Reference](https://agntcy.github.io/acp-spec/docs/openapi.html)
+See [Getting Started Guide](docs/README.md#getting-started)
 
- 
+
+## Documentation
+
+See [ACP Documentation](https://agntcy.github.io/acp-spec)
+
+See [IoA Documentation](https://docs.agntcy.org) for more info on Internet of Agents.
+
+See ACP specification in [YAML Format](openapi.yaml) or browse its [OpenAPI visualization](https://agntcy.github.io/acp-spec/docs/openapi.html)
+
 
 ## Roadmap
 
@@ -27,7 +33,7 @@ of proposed features (and known issues).
 Contributions are what make the open source community such an amazing place to
 learn, inspire, and create. Any contributions you make are **greatly
 appreciated**. For detailed contributing guidelines, please see
-[CONTRIBUTING.md](CONTRIBUTING.md)
+[CONTRIBUTING.md](docs/CONTRIBUTING.md)
 
 ## Copyright Notice and License
 
