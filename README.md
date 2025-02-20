@@ -25,8 +25,13 @@ See ACP specification in [YAML Format](openapi.yaml) or browse its [OpenAPI visu
 
 ## Roadmap
 
+Immediate roadmap:
+* Add support for streaming
+* Add support for pre-configured agents
+* Add support for star run by agent name and version
+
 See the [open issues](https://github.com/agntcy/acp-spec/issues) for a list
-of proposed features (and known issues).
+of additional proposed features (and known issues).
 
 ## Contributing
 
