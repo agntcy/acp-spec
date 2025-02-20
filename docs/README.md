@@ -82,8 +82,9 @@ In the sequence above:
 1. The client request the output of the run
 1. The server return the final result of the run.
 
-> [!NOTE]  
+>  
 > Note that the format of the input and the configuration are not specified by ACP, but they are defined in the agent manifest.
+>
 
 #### Start a Run of an Agent and block until completion
 In this case, the clients starts a background run of an agent and immediately tries to retrieve the run output blocking on this call until completion or timeout.
@@ -114,7 +115,6 @@ sequenceDiagram
     participant S as ACP Server
     C->>+S: POST /runs {agent_id, input, config, metadata, callback={POST /callme}}
     S->>-C: Run={run_id, status="pending"}
-    loop Until run["status"] == "pending"
     S->>C: POST /callme Run={run_id, status="success"}
     C->>+S: GET /runs/{run_id}/output
     S->>-C: RunOutput={type="result", result}
@@ -126,9 +126,45 @@ In the sequence above:
 1. The client request the output of the run
 1. The server return the final result of the run.
 
-#### Run Interrupt and Resume
-In this case, the client starts a run and when it request  
+### Run Interrupt and Resume
+Agent can support interrupts, i.e. the run execution can interrupt to request additional input to the client.
 
+When an interrupt occurs, the server provides the client with an interrupt payload, which specifies the interrupt type that have occurred and all the information associated with that interrupt, i.e a request for additional input.
+
+The client can collect the needed iput for the specific interrupt and resume the run by providing the resume payload, i.e. the additional input requested by the interrupt.
+
+>  
+> Note that the type of interrupts and the correspondent interrupt and resume payload are not specified by ACP, because they are agent dependent. They are instead specified in the agent manifest.
+>
+
+The interrput is provided by the server when the client requests the output.
+
+### Start an Run and resume it upon interruption
+
+In this case, the client asks for the agent output and receives and interrupt intead of the final output. The client then resumes the run providing the needed input and finally when run is completed, gets the result.
+
+```mermaid
+sequenceDiagram
+    participant C as ACP Client
+    participant S as ACP Server
+    C->>+S: POST /runs {agent_id, input, config, metadata}
+    S->>-C: Run={run_id, status="pending"}
+    C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
+    S->>-C: RunOutput={type="interrupt", interrupt_type, interrupt_payload}
+    note over C: collect needed input
+    C->>+S: POST /runs/{run_id} {interrupt_type, resume_payload}
+    S->>-C: Run={run_id, status="pending"}  
+    C->>+S: GET /runs/{run_id}/output
+    S->>-C: RunOutput={type="result", result}      
+```
+In the sequence above:
+1. The client start the run
+1. The server returns the run object
+1. The client requests the output
+1. The server returns an interrupt, specifying interrupt type and the associateed payload
+1. The client resumes the run providing the needed input in the resume payload
+1. the client requests the output
+1. The server returns the final result.
 
 
 ### Thread Runs
