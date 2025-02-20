@@ -25,20 +25,20 @@ sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     C->>+S: POST /agents/search {}
-    S->>-C: [<br/>
+    S->>-C: AgentList = [<br/>
     {"id": "b8e021e7-9133-4849-bd1a-f4ebffb560b2", "metadata": ...}<br/>
     {"id": "6f3a4236-f91e-4094-8127-f4a585d23594", "metadata": ...}<br/>
     ]
 ```
 
-#### Example: Retrieve agent from its name
+#### Example: Retrieve an agent from its name and version
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
-    C->>+S: POST /agents/search <br/>{"name":"smart-agent"}
-    S->>-C: {"id": "b8e021e7-9133-4849-bd1a-f4ebffb560b2", "metadata": ...}
+    C->>+S: POST /agents/search <br/>{"name":"smart-agent", "version": "0.1.3"}
+    S->>-C: AgentList = [{"id": "b8e021e7-9133-4849-bd1a-f4ebffb560b2", "metadata": ...}]
 ```
 
 #### Example: Retrieve agent manifest from its identifier
@@ -51,5 +51,33 @@ sequenceDiagram
     S->>-C: Agent Manifest
 ```
 
-# Agent Manifest
+### Runs
+A run is a single execution of an agent.
+
+#### Example: Starting a Run of an Agent
+
+```mermaid
+sequenceDiagram
+    participant C as ACP Client
+    participant S as ACP Server
+    C->>+S: POST /runs <br/>
+        {<br/>
+            agent_id: {...},<br/>
+            config: {...},<br/>
+            input: {...},<br/>
+            metadata: {...},<br/>
+        }<br/>
+    S->>-C: Run: {"id": "...", "status": "pending", ...}
+```
+In the sequence above the client is requesting a run to the server on a specific agent, providing the `agent_id`, and specifying:
+* configuration: a run configuration is flavoring the behavior of this agent for this run
+* input: run input provides the data the agent will operate on
+* metadata: metadata is a free format object that can be used by the client to tag the run with arbitrary information
+
+Note that the format of the input and the configuration are not specified by ACP, but they are defined in the agent manifest.
+
+### Thread Runs
+
+
+## Agent Manifest
 [TBD]
