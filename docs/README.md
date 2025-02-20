@@ -141,7 +141,7 @@ The client can collect the needed iput for the specific interrupt and resume the
 
 The interrput is provided by the server when the client requests the output.
 
-### Start a run and resume it upon interruption
+#### Start a run and resume it upon interruption
 
 In this case, the client asks for the agent output and receives and interrupt intead of the final output. The client then resumes the run providing the needed input and finally when run is completed, gets the result.
 
@@ -181,7 +181,7 @@ The server offers ways to retrieve the current thread state and the history of t
 > Note that the format of the thread state is not specified by ACP, but it is (optionally) defined in the agent manifest. If specified, it can be retrieved by the client, if not it's not accessible to the client.
 >
 
-### Start of multiple runs over the same thread
+#### Start of multiple runs over the same thread
 In this case the client starts a sequence of runs on the same threads accumulating a state in the server. In this specific example the input is a chat message, while the state kept in the server is the chat history.
 
 ```mermaid
