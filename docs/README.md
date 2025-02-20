@@ -21,9 +21,13 @@ sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     C->>+S: POST /agents/search <br/>{"name":"smart-agent"}
-    activate S
     S->>-C: {"id": "b8e021e7-9133-4849-bd1a-f4ebffb560b2", "metadata": ...}
 ```
+
+In the diagram above:
+* The client is searching for an agent that match a given name, as writen in its manifest.
+* The server is responding with the an object containing the `AgentID` and its `metadata`.
+* The Cient can retrieve the full manifest through the API
 
 
 # Agent Manifest
