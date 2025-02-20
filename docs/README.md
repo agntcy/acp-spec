@@ -18,56 +18,47 @@ Explore tools for ACP and Agent Manifest in the [Agent Control SDK Repo](agntcy.
 ACP offers an API to search for the agents served by the ACP server. 
 Once a client has an agent identifier `AgentID`, it can use it to either retreive the agent manifest or to control agent runs.
 
-#### Example: Retrieve all agents supported by the server
+#### Retrieve all agents supported by the server
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     C->>+S: POST /agents/search {}
-    S->>-C: AgentList = [<br/>
-    {"id": "b8e021e7-9133-4849-bd1a-f4ebffb560b2", "metadata": ...}<br/>
-    {"id": "6f3a4236-f91e-4094-8127-f4a585d23594", "metadata": ...}<br/>
-    ]
+    S->>-C: AgentList=[{id, metadata}, {id, metadata}, ...]
 ```
 
-#### Example: Retrieve an agent from its name and version
+#### Retrieve an agent from its name and version
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     C->>+S: POST /agents/search <br/>{"name":"smart-agent", "version": "0.1.3"}
-    S->>-C: AgentList = [{"id": "b8e021e7-9133-4849-bd1a-f4ebffb560b2", "metadata": ...}]
+    S->>-C: AgentList = [{id="...", metadata="..."}]
 ```
 
-#### Example: Retrieve agent manifest from its identifier
+#### Retrieve agent manifest from its identifier
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     C->>+S: GET /agents/agent/{agent_id}/manifest
-    S->>-C: Agent Manifest
+    S->>-C: AgentManifest={...}
 ```
 
 ### Runs
 A run is a single execution of an agent.
 
-#### Example: Starting a Run of an Agent
+#### Starting a Run of an Agent
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
-    C->>+S: POST /runs <br/>
-        {<br/>
-            agent_id: {...},<br/>
-            config: {...},<br/>
-            input: {...},<br/>
-            metadata: {...},<br/>
-        }<br/>
-    S->>-C: Run: {"id": "...", "status": "pending", ...}
+    C->>+S: POST /runs {agent_id, input, config, metadata}
+    S->>-C: Run={run_id, ...}
 ```
 In the sequence above the client is requesting a run to the server on a specific agent, providing the `agent_id`, and specifying:
 * configuration: a run configuration is flavoring the behavior of this agent for this run
