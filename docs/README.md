@@ -224,7 +224,7 @@ Agent Manifest is a descriptor that contains all the needed information to know 
 * Deploy the agent
 
 The Agent Manifest can be obtained from the Agent Directory or can be obtained through an [ACP call](#retrieve-agent-manifest-from-its-identifier). 
-Note that when the manifest is retrieved through ACP, the information about the depoloyemt modes are supreflous, because it is already deployed.
+Note that when the manifest is retrieved through ACP, the information about the deployment modes is superfluous, because it is already deployed.
 
 ### Agent manifest sections and examples
 
@@ -271,7 +271,7 @@ The schemas of all the objects that this agent supports for:
    * Interrupt and Resume Payloads 
    * Thread State
 
-Note that these schemas are needed in the agent manifest, since the are agent specific and are not defined by ACP, i.e. ACP defines a generic JSON object for the data structures listed above.
+Note that these schemas are needed in the agent manifest, since they are agent specific and are not defined by ACP, i.e. ACP defines a generic JSON object for the data structures listed above.
 
 <details>
 <summary>Sample metadata specs section for the mailcomposer agent</summary>
@@ -366,7 +366,7 @@ Note that these schemas are needed in the agent manifest, since the are agent sp
           "resume_payload": {
             "type": "object",
             "title": "Email Approval Input",
-            "description": "User Apporval for this email",
+            "description": "User Approval for this email",
             "properties": {
               "reason": {
                 "title": "Approval Reason",
@@ -392,8 +392,8 @@ Note that these schemas are needed in the agent manifest, since the are agent sp
 The agent supports threads, interrupts, and callback.
 
 It declares schemas for input, output, and config:
-* As input it expects the next message of the chat from the user
-* As outout it produces the next message of the chat from the agent
+* As input, it expects the next message of the chat from the user
+* As output, it produces the next message of the chat from the agent
 * As config it expects the style of the email to be written.
 
 It supports one kind of interrupt, which is used to ask user for approval before sending the email. It provides subject, body, and recipients of the email as interrupt payload and expects approval as input to resume.
@@ -404,7 +404,7 @@ It supports a thread state which holds the chat history.
 
 #### Agent Dependencies
 
-Agent Dependecies section lists all the other agents this agent depends on. We refer to them as `sub-agents`.
+Agent Dependencies section lists all the other agents this agent depends on. We refer to them as `sub-agents`.
 
 Sub-agents are represented as references to other manifests. 
 This information is needed when the manifest is used for agent deployment to make sure that sub-agents are available or to deploy them if needed.
