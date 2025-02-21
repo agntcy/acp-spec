@@ -414,6 +414,7 @@ This information is needed when the manifest is used for agent deployment to mak
 
 ```json
 {
+  ...
     "dependencies": [
       {
         "name": "org.agntcy.sample-agent-2",
@@ -452,6 +453,7 @@ Agent Manifest currently supports three deployment modes:
 
 ```json
 {
+  ...
     "deployments": [
       {
         "type": "source_code",
