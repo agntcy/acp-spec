@@ -238,7 +238,7 @@ Agent Metadata section contains all the information about agent identification a
 It contains unique name which together with a version constitutes the unique identifier of the agent. The uniqueness must be guaranteed within the server it is part of and more generally in the Agent Directory domain it belongs to.
 
 <details>
-<summary> Sample manifest metadata section for the `mailcomposer` agent</summary>
+<summary> Sample manifest metadata section for the mailcomposer agent</summary>
 
 ```json
 {
@@ -274,7 +274,7 @@ The schemas of all the objects that this agent supports for:
 Note that these schemas are needed in the agent manifest, since the are agent specific and are not defined by ACP, i.e. ACP defines a generic JSON object for the data structures listed above.
 
 <details>
-<summary>Sample metadata specs section for the `mailcomposer` agent</summary>
+<summary>Sample metadata specs section for the mailcomposer agent</summary>
 
 ```json
 {
@@ -401,4 +401,36 @@ It supports one kind of interrupt, which is used to ask user for approval before
 It supports a thread state which holds the chat history.
 
 </details>
-    
+
+#### Agent Dependencies
+
+Agent Dependecies section lists all the other agents this agent depends on. We refer to them as `sub-agents`.
+
+Sub-agents are represented as references to other manifests. 
+This information is needed when the manifest is used for agent deployment to make sure that sub-agents are available or to deploy them if needed.
+
+<details>
+<summary> Sample manifest dependency section for the mailcomposer agent</summary>
+
+```json
+{
+    "dependencies": [
+      {
+        "name": "org.agntcy.sample-agent-2",
+        "version": "0.0.1"
+      },
+      {
+        "name": "org.agntcy.sample-agent-3",
+        "version": "0.0.1"
+      }
+    ]
+  ...
+}
+```
+
+Mailcomposer agent in the example above depends on `sample-agent-2` and `sample-agent-3`.
+
+</details>
+
+#### Agent Deployments
+TBD
