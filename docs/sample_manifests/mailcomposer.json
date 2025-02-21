@@ -128,10 +128,10 @@
       {
         "type": "source_code",
         "name": "src",
-        "url": "file:///tmp/agent-1",
+        "url": "git@github.com:agntcy/mailcomposer.git",
         "framework_config": {
           "framework_type": "langgraph",
-          "graph": "agentgraph"
+          "graph": "mailcomposer"
         }
       }
     ]
