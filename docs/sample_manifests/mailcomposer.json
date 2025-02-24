@@ -94,7 +94,7 @@
             "resume_payload": {
               "type": "object",
               "title": "Email Approval Input",
-              "description": "User Apporval for this email",
+              "description": "User Approval for this email",
               "properties": {
                 "reason": {
                   "title": "Approval Reason",
