@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-Explore the ACP specification by browsing the OpenAPI view [https://agntcy.github.io/acp-spec/docs/openapi.html].
+Explore the ACP specification by browsing the OpenAPI view <https://agntcy.github.io/acp-spec/docs/openapi.html>.
 
 Learn how to use the API by looking at [API Usage Flows](#api-usage-flows)
 
@@ -238,7 +238,7 @@ Agent Metadata section contains all the information about agent identification a
 It contains unique name which together with a version constitutes the unique identifier of the agent. The uniqueness must be guaranteed within the server it is part of and more generally in the Agent Directory domain it belongs to.
 
 <details>
-<summary> Sample manifest metadata section for the mailcomposer agent</summary>
+<summary>Sample manifest metadata section for the mailcomposer agent</summary>
 
 ```json
 {
