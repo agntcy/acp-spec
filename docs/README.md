@@ -230,7 +230,12 @@ Note that when the manifest is retrieved through ACP, the information about the 
 
 We present the details of a sample manifest through the various manifest sections.
 
-Full sample manifest can be found [here](./sample_manifests/mailcomposer.json)
+<details>
+<summary>Full sample manifest</summary>
+
+[filename](docs/sample_manifests/mailcomposer.json ':include :type=code')
+
+</details>
 
 #### Agent Metadata
 
