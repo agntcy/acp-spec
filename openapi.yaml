@@ -160,6 +160,19 @@ paths:
             schema:
               $ref: '#/components/schemas/RunCreate'
         required: true
+      callbacks: 
+        runstatuschange: 
+          "{$request.body#/webhook}": 
+            post:
+              requestBody: 
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/Run'
+              responses:
+                "200":
+                  description: Your server returns this code if it accepts the callback
       responses:
         '200':
           description: Success
@@ -1146,10 +1159,9 @@ components:
         webhook:
           type: string
           format: uri
-          title: Completion or Interrupt webhook
+          title: Status change webhook
           description: >-
-            Webhook to call after run finishes or interrupts. If missing no
-            callback is called and the client needs to poll.
+            Webhook to call upon change of run status. This is a url that accepts a POST containing the `Run` object as body. See Callbacks definition.
       required:
         - agent_id
     Run:
