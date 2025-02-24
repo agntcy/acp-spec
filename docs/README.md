@@ -8,13 +8,13 @@ Learn how to use the API by looking at [API Usage Flows](#api-usage-flows)
 
 Learn about Agent Manifest and its usage [here](#agent-manifest)
 
-Explore tools for ACP and Agent Manifest in the [Agent Control SDK Repo](agntcy.github.io/acp-sdk) 
+Explore tools for ACP and Agent Manifest in the [Agent Control SDK Repo](agntcy.github.io/acp-sdk)
 
 ## API Usage Flows
 
 ### Agents Retrieval APIs
 
-ACP offers an API to search for the agents served by the ACP server. 
+ACP offers an API to search for the agents served by the ACP server.
 Once a client has an agent identifier `AgentID`, it can use it to either retrieve the agent manifest or to control agent runs.
 
 #### Retrieve all agents supported by the server
@@ -80,7 +80,7 @@ In the sequence above:
 1. The client request the output of the run
 1. The server returns the final result of the run.
 
->  
+>
 > Note that the format of the input and the configuration are not specified by ACP, but they are defined in the agent manifest.
 >
 
@@ -131,7 +131,7 @@ When an interrupt occurs, the server provides the client with an interrupt paylo
 
 The client can collect the needed input for the specific interrupt and resume the run by providing the resume payload, i.e. the additional input requested by the interrupt.
 
->  
+>
 > Note that the type of interrupts and the correspondent interrupt and resume payload are not specified by ACP, because they are agent dependent. They are instead specified in the agent manifest.
 >
 
@@ -151,9 +151,9 @@ sequenceDiagram
     S->>-C: RunOutput={type="interrupt", interrupt_type, interrupt_payload}
     note over C: collect needed input
     C->>+S: POST /runs/{run_id} {interrupt_type, resume_payload}
-    S->>-C: Run={run_id, status="pending"}  
+    S->>-C: Run={run_id, status="pending"}
     C->>+S: GET /runs/{run_id}/output
-    S->>-C: RunOutput={type="result", result}      
+    S->>-C: RunOutput={type="result", result}
 ```
 In the sequence above:
 1. The client start the run
@@ -173,7 +173,7 @@ Subsequent runs on the same thread use the previously created state, together wi
 
 The server offers ways to retrieve the current thread state and the history of the runs on a thread and the evolution of the thread states over execution of runs.
 
->  
+>
 > Note that the format of the thread state is not specified by ACP, but it is (optionally) defined in the agent manifest. If specified, it can be retrieved by the client, if not it's not accessible to the client.
 >
 
@@ -188,14 +188,14 @@ sequenceDiagram
     C->>+S: POST /runs {agent_id, message="Hello, my name is John?", config, metadata}
     S->>-C: Run={run_id, status="pending", thread_id}
     C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
-    S->>-C: RunOutput={type="result", result={"message"="Hello John, how can I help?"}}  
+    S->>-C: RunOutput={type="result", result={"message"="Hello John, how can I help?"}}
     end
     note right of S: state=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>]
     rect rgb(240,240,240)
     C->>+S: POST /runs {agent_id, message="Can you remind my name?", config, metadata, thread_id}
     S->>-C: Run={run_id, status="pending", thread_id}
     C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
-    S->>-C: RunOutput={type="result", result={"message"="Yes, your name is John"}}  
+    S->>-C: RunOutput={type="result", result={"message"="Yes, your name is John"}}
     end
     note right of S: state=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>"Can you remind my name?",<br/>"Yes, your name is John"<br/>]
     C->>+S: GET /threads/{thread_id}/state {thread_id}
@@ -223,7 +223,7 @@ Agent Manifest is a descriptor that contains all the needed information to know 
 * Consume its capabilities
 * Deploy the agent
 
-The Agent Manifest can be obtained from the Agent Directory or can be obtained through an [ACP call](#retrieve-agent-manifest-from-its-identifier). 
+The Agent Manifest can be obtained from the Agent Directory or can be obtained through an [ACP call](#retrieve-agent-manifest-from-its-identifier).
 Note that when the manifest is retrieved through ACP, the information about the deployment modes is superfluous, because it is already deployed.
 
 ### Agent manifest sections and examples
@@ -259,7 +259,7 @@ It contains unique name which together with a version constitutes the unique ide
 }
 ```
 
-Metadata for a mail composer agent named `org.agntcy.mailcomposer` version `0.0.1`. 
+Metadata for a mail composer agent named `org.agntcy.mailcomposer` version `0.0.1`.
 
 </details>
 
@@ -273,7 +273,7 @@ The schemas of all the objects that this agent supports for:
    * Agent Configuration
    * Run Input
    * Run Output
-   * Interrupt and Resume Payloads 
+   * Interrupt and Resume Payloads
    * Thread State
 
 Note that these schemas are needed in the agent manifest, since they are agent specific and are not defined by ACP, i.e. ACP defines a generic JSON object for the data structures listed above.
@@ -283,7 +283,7 @@ Note that these schemas are needed in the agent manifest, since they are agent s
 
 ```json
 {
-  ...  
+  ...
     "specs": {
       "capabilities": {
         "threads": true,
@@ -411,7 +411,7 @@ It supports a thread state which holds the chat history.
 
 Agent Dependencies section lists all the other agents this agent depends on. We refer to them as `sub-agents`.
 
-Sub-agents are represented as references to other manifests. 
+Sub-agents are represented as references to other manifests.
 This information is needed when the manifest is used for agent deployment to make sure that sub-agents are available or to deploy them if needed.
 
 <details>
@@ -439,7 +439,7 @@ Mailcomposer agent in the example above depends on `sample-agent-2` and `sample-
 </details>
 
 #### Agent Deployments
-Agent Deployments section lists all the possible ways the agent can be consumed, which we call deployment modes. 
+Agent Deployments section lists all the possible ways the agent can be consumed, which we call deployment modes.
 
 Agent Manifest currently supports three deployment modes:
 * Source Code Deployment: In this case the agent can be deployed starting from its code. For this deployment mode, the manifest provides:
