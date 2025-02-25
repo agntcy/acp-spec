@@ -851,12 +851,12 @@ components:
                       description: >-
                         this is `true` if the agent supports values streaming.
                         If `false` or missing values streaming is not supported.
-                    updates:
+                    custom:
                       type: boolean
-                      title: Updates Streaming
+                      title: Streaming Custom Objects
                       description: >-
-                        this is `true` if the agent supports updates streaming.
-                        If `false` or missing updates streaming is not
+                        this is `true` if the agent supports streaming of agent specified objects.
+                        If `false` or missing, custom streaming is not
                         supported.
             input:
               type: object
@@ -882,6 +882,25 @@ components:
               description: >-
                 This object contains an instance of an OpenAPI schema object,
                 formatted as per the OpenAPI specs:
+                https://spec.openapis.org/oas/v3.1.1.html#schema-object
+              examples:
+                - type: object
+                  required:
+                    - name
+                  properties: null
+                  name:
+                    type: string
+                  address:
+                    type: string
+                  age:
+                    type: integer
+                    format: int32
+                    minimum: 0
+            custom_streaming_update:
+              type: object
+              description: >-
+                This describes the format of an Update in the streaming.  Must be specified
+                if `streaming.custom` capability is true and cannot be specified otherwise. Format follows:
                 https://spec.openapis.org/oas/v3.1.1.html#schema-object
               examples:
                 - type: object
@@ -1395,57 +1414,24 @@ components:
         propertyName: type
         mapping:
           result: '#/components/schemas/RunResult'
-          update: '#/components/schemas/RunResultUpdate'
-    RunResultUpdate:
-      title: Run Result Update
-      description: Delta on the Run Result.
+          custom: '#/components/schemas/RunResultUpdate'
+    CustomRunResultUpdate:
+      title: Custom Run Result Update
+      description: Object holding a custom defined update of the agent result during streaming.
       type: object
       properties:
         type:
           title: Output Type
           type: string
           enum:
-            - update
+            - custom
         run_id:
           type: string
           format: uuid
           title: Run Id
           description: The ID of the run.
-        delta:
-          title: Delta
-          type: array
-          description: Array of atomic updates to the `OutputSchema` data structure.
-          items:
-            type: object
-            properties:
-              affected_field:
-                type: string
-                format: jsonpath
-                description: >-
-                  A Json path pointing to the value the result schema this delta
-                  is for.
-              value_delta:
-                oneOf:
-                  - type: string
-                  - type: number
-                  - type: integer
-                  - type: boolean
-                  - type: array
-                  - type: object
-                title: Value Delta
-                description: >-
-                  Value delta on the field specified in `affected_field`.  Type
-                  of this field must correspond to the type of the affected
-                  field.
-              operation:
-                type: string
-                enum:
-                  - replace
-                  - append
-                description: >-
-                  Specify the operation to perform on the afftected field.
-                  **Note that `append` is only supported if the type of affected
-                  field is `array` or `string`**
+        update:
+          $ref: '#/components/schemas/StreamUpdateSchema'
     RunError:
       title: Run Error
       description: Run terminated with an error
@@ -1505,6 +1491,11 @@ components:
       description: >-
         The thread state. The Schema is described in the agent spec under
         'thread_state'.
+    StreamUpdateSchema:
+      type: object
+      title: Stream Update Schema
+      description: >-
+        An update in the SSE event streaming where streaming mode is set to custom.
     InterruptPayloadSchema:
       type: object
       title: Interrupt Payload
