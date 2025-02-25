@@ -1239,7 +1239,7 @@ components:
             - udates
           title: Streaming Mode
           description: >-
-            if populated, indicates that the client requests to stream results
+            If populated, indicates that the client requests to stream results
             with the specified streaming mode. The requested streaming mode must
             be one of the one supported by the agent as declared in its
             manifest.
