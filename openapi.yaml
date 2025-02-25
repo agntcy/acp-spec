@@ -1259,7 +1259,7 @@ components:
           type: string
           enum:
             - values
-            - udates
+            - custom
           title: Streaming Mode
           description: >-
             If populated, indicates that the client requests to stream results
