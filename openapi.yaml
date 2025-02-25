@@ -818,7 +818,7 @@ components:
                   title: Thread Support
                   default: false
                   description: >-
-                    this is `true` if the agent supports run threads. If this is
+                    This is `true` if the agent supports run threads. If this is
                     `false`, then the threads tagged with `Threads` are not
                     available. If missing, it means `false`
                 interrupts:
