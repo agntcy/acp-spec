@@ -432,7 +432,10 @@ paths:
           in: path
       responses:
         '200':
-          description: Stream of agent results either as values or updates. Note that the stream of events is carried using the format specified in SSE spec `test/event-stream`
+          description: >-
+            Stream of agent results either as values or updates. Note that the
+            stream of events is carried using the format specified in SSE spec
+            `text/event-stream`
           content:
             text/event-stream:
               schema:
@@ -818,7 +821,7 @@ components:
                   title: Thread Support
                   default: false
                   description: >-
-                    this is `true` if the agent supports run threads. If this is
+                    This is `true` if the agent supports run threads. If this is
                     `false`, then the threads tagged with `Threads` are not
                     available. If missing, it means `false`
                 interrupts:
@@ -826,7 +829,7 @@ components:
                   title: Interrupt Support
                   default: false
                   description: >-
-                    this is `true` if the agent runs can interrupt to request
+                    This is `true` if the agent runs can interrupt to request
                     additional input and can be subsequently resumed. If
                     missing, it means `false`
                 callbacks:
@@ -834,7 +837,7 @@ components:
                   title: Callback Support
                   default: false
                   description: >-
-                    this is `true` if the agent supports a webhook to report run
+                    This is `true` if the agent supports a webhook to report run
                     results. If this is `false`, providing a `webhook` at run
                     creation has no effect. If missing, it means `false`
                 streaming:
@@ -842,22 +845,22 @@ components:
                   title: Streaming Modes
                   description: >-
                     Streaming modes supported. If missing, streaming is not
-                    supported.  If no mode is supproted attempts to stream
+                    supported.  If no mode is supported attempts to stream
                     output will result in an error.
                   properties:
                     values:
                       type: boolean
                       title: Values Streaming
                       description: >-
-                        this is `true` if the agent supports values streaming.
+                        This is `true` if the agent supports values streaming.
                         If `false` or missing values streaming is not supported.
                     custom:
                       type: boolean
                       title: Streaming Custom Objects
                       description: >-
-                        this is `true` if the agent supports streaming of agent specified objects.
-                        If `false` or missing, custom streaming is not
-                        supported.
+                        This is `true` if the agent supports streaming of agent
+                        specified objects. If `false` or missing, custom
+                        streaming is not supported.
             input:
               type: object
               description: >-
@@ -899,8 +902,9 @@ components:
             custom_streaming_update:
               type: object
               description: >-
-                This describes the format of an Update in the streaming.  Must be specified
-                if `streaming.custom` capability is true and cannot be specified otherwise. Format follows:
+                This describes the format of an Update in the streaming.  Must
+                be specified if `streaming.custom` capability is true and cannot
+                be specified otherwise. Format follows:
                 https://spec.openapis.org/oas/v3.1.1.html#schema-object
               examples:
                 - type: object
@@ -1258,8 +1262,8 @@ components:
             - udates
           title: Streaming Mode
           description: >-
-            if populated, indicates that the client requests to stream results
-            with the specified streaming mode. The streaming mode requested must
+            If populated, indicates that the client requests to stream results
+            with the specified streaming mode. The requested streaming mode must
             be one of the one supported by the agent as declared in its
             manifest.
       required:
@@ -1384,7 +1388,7 @@ components:
       type: object
       title: Run Output Stream Event
       description: >-
-        Server-sent event containing one agent ouptut event. Actual event type
+        Server-sent event containing one agent output event. Actual event type
         is carried inside the data.
       properties:
         id:
@@ -1400,24 +1404,24 @@ components:
             compatible with SSE spec. The actual type differentiation is done in
             the event itself.
         data:
-          $ref: '#/components/schemas/RunOutputStreamEventData'
-    RunOutputStreamEventData:
-      title: Stream Event Payload
-      description: >-
-        A serialized JSON data structure carried in the SSE event data field.
-        The event can carry either a full result, if streaming mode is `values`
-        or an update if streaming mode is `updates`
-      oneOf:
-        - $ref: '#/components/schemas/RunResult'
-        - $ref: '#/components/schemas/RunResultUpdate'
-      discriminator:
-        propertyName: type
-        mapping:
-          result: '#/components/schemas/RunResult'
-          custom: '#/components/schemas/RunResultUpdate'
+          title: Stream Event Payload
+          description: >-
+            A serialized JSON data structure carried in the SSE event data
+            field. The event can carry either a full result, if streaming mode
+            is `values` or an update if streaming mode is `updates`
+          oneOf:
+            - $ref: '#/components/schemas/RunResult'
+            - $ref: '#/components/schemas/CustomRunResultUpdate'
+          discriminator:
+            propertyName: type
+            mapping:
+              result: '#/components/schemas/RunResult'
+              custom: '#/components/schemas/CustomRunResultUpdate'
     CustomRunResultUpdate:
       title: Custom Run Result Update
-      description: Object holding a custom defined update of the agent result during streaming.
+      description: >-
+        Object holding a custom defined update of the agent result during
+        streaming.
       type: object
       properties:
         type:
@@ -1471,31 +1475,33 @@ components:
       type: object
       title: Input Schema
       description: >-
-        The output of the graph. Schema is described in the agent spec under
-        'input'.
+        The input to the agent. The schema is described in Agent Manifest uner
+        'spec.thread_state'.'input'.
     OutputSchema:
       type: object
       title: Output Schema
       description: >-
-        The input to the graph. Schema is described in the agent spec under
-        'output'.
+        The output of the agent. The schema is described in Agent Manifest uner
+        'spec.output'.
     ConfigSchema:
       type: object
       title: Config
       description: >-
-        The configuration for this agent. Schema is described in the agent spec
-        under 'config'. If missing, default values are used.
+        The configuration for this agent. The schema is described in Agent
+        Manifest uner 'spec.config'. If missing, default values are used.
     ThreadStateSchema:
       type: object
       title: Thread State Schema
       description: >-
-        The thread state. The Schema is described in the agent spec under
-        'thread_state'.
+        The thread state. The schema is described in Agent Manifest uner
+        'spec.thread_state'.
     StreamUpdateSchema:
       type: object
       title: Stream Update Schema
       description: >-
-        An update in the SSE event streaming where streaming mode is set to custom.
+        An update in the SSE event streaming where streaming mode is set to
+        custom. The schema is described in Agent Manifest uner
+        'spec.custom_streaming_update'.
     InterruptPayloadSchema:
       type: object
       title: Interrupt Payload
