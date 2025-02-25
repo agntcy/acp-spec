@@ -855,7 +855,7 @@ components:
                       type: boolean
                       title: Updates Streaming
                       description: >-
-                        this is `true` if the agent supports updates streaming.
+                        This is `true` if the agent supports updates streaming.
                         If `false` or missing updates streaming is not
                         supported.
             input:
