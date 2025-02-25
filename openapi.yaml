@@ -1422,7 +1422,7 @@ components:
                 type: string
                 format: jsonpath
                 description: >-
-                  A Json path pointing to the value the result schema this delta
+                  A JSON path pointing to the value the result schema this delta
                   is for.
               value_delta:
                 oneOf:
