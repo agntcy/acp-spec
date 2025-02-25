@@ -1475,32 +1475,32 @@ components:
       type: object
       title: Input Schema
       description: >-
-        The input to the agent. The schema is described in Agent Manifest uner
+        The input to the agent. The schema is described in Agent Manifest under
         'spec.thread_state'.'input'.
     OutputSchema:
       type: object
       title: Output Schema
       description: >-
-        The output of the agent. The schema is described in Agent Manifest uner
+        The output of the agent. The schema is described in Agent Manifest under
         'spec.output'.
     ConfigSchema:
       type: object
       title: Config
       description: >-
         The configuration for this agent. The schema is described in Agent
-        Manifest uner 'spec.config'. If missing, default values are used.
+        Manifest under 'spec.config'. If missing, default values are used.
     ThreadStateSchema:
       type: object
       title: Thread State Schema
       description: >-
-        The thread state. The schema is described in Agent Manifest uner
+        The thread state. The schema is described in Agent Manifest under
         'spec.thread_state'.
     StreamUpdateSchema:
       type: object
       title: Stream Update Schema
       description: >-
         An update in the SSE event streaming where streaming mode is set to
-        custom. The schema is described in Agent Manifest uner
+        custom. The schema is described in Agent Manifest under
         'spec.custom_streaming_update'.
     InterruptPayloadSchema:
       type: object
