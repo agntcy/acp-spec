@@ -842,7 +842,7 @@ components:
                   title: Streaming Modes
                   description: >-
                     Streaming modes supported. If missing, streaming is not
-                    supported.  If no mode is supproted attempts to stream
+                    supported.  If no mode is supported attempts to stream
                     output will result in an error.
                   properties:
                     values:
