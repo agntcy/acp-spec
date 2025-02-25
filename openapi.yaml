@@ -826,7 +826,7 @@ components:
                   title: Interrupt Support
                   default: false
                   description: >-
-                    this is `true` if the agent runs can interrupt to request
+                    This is `true` if the agent runs can interrupt to request
                     additional input and can be subsequently resumed. If
                     missing, it means `false`
                 callbacks:
