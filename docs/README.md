@@ -99,6 +99,7 @@ sequenceDiagram
 
 In the sequence above:
 1. The client requests to start a run on a specific agent
+1. The server returns a run object 
 1. The client request the output of the run providing addition `block_timeout` parameter, and blocs until run status changes or timeout expires.
 1. The server returns the final result of the run. Note that in case the timeout expired before, the server would have returned no content.
 
@@ -214,6 +215,46 @@ In the sequence above:
 1. The server update the thread state and returns the run output
 1. Finally, the client requests the thread state (this is an optional operation)
 1. The server returns the current thread state which collect the whole chat history
+
+### Output Streaming
+ACP supports output streaming. Agent can stream intermediate results of a Run to provide better response time and user experience.
+
+ACP implements streaming using Server Sent Events specified here: https://html.spec.whatwg.org/multipage/server-sent-events.html.
+
+In a nutshell, the client keeps the HTTP connection open and receives a stream of events from the server, where each event carries an update of the run result.
+
+ACP supports 2 streaming modes:
+1. **values** where each event contains a full instance of the RunResult, which fully replace the previous update.
+2. **custom** where the schema of the event is left unspecified by ACP, which it can be specified in the specific agent manifest under `spec.custom_streaming_update`
+
+#### Start a Run and stream output until completion
+
+sequenceDiagram
+    participant C as ACP Client
+    participant S as ACP Server
+    C->>+S: POST /runs {agent_id, input, config, metadata, streaming='values'}
+    S->>-C: Run={run_id, status="pending"}
+    C->>+S: GET /runs/{run_id}/stream 
+    rect rgb(240,240,240)
+    S->>C: StreamEvent={id="1", event="agent_event", data={run_id, type="result", result={"message": "Hello"}}}
+    S->>C: StreamEvent={id="2", event="agent_event", data={run_id, type="result", result={"message": "Hello, how"}}}
+    S->>C: StreamEvent={id="2", event="agent_event", data={run_id, type="result", result={"message": "Hello, how can"}}}
+    S->>C: StreamEvent={id="3", event="agent_event", data={run_id, type="result", result={"message": "Hello, how can I help"}}}
+    S->>C: StreamEvent={id="4",, event="agent_event", data={run_id, type="result", result={"message": "Hello, how can I help you"}}}
+    S->>C: StreamEvent={id="5",, event="agent_event", data={run_id, type="result", result={"message": "Hello, how can I help you today"}}}
+    S->>C: Close Connection
+    end
+
+In the sequence above:
+1. The client requests to start a run on a specific agent specifying streaming mode = 'values'
+1. The server returns a run object 
+1. The client request the output streaming and keeps the connection open
+1. The server returns an event with message="Hello"
+1. The server returns an event with updated message "Hello, how"
+1. The server returns an event with updated message "Hello, how can"
+1. The server returns an event with updated message "Hello, how can I help"
+1. The server returns an event with updated message "Hello, how can I help you"
+1. The server returns an event with updated message "Hello, how can I help you today"
 
 ## Agent Manifest
 

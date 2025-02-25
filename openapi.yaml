@@ -1408,7 +1408,7 @@ components:
           description: >-
             A serialized JSON data structure carried in the SSE event data
             field. The event can carry either a full result, if streaming mode
-            is `values` or an update if streaming mode is `updates`
+            is `values` or an custom update if streaming mode is `custom`
           oneOf:
             - $ref: '#/components/schemas/RunResult'
             - $ref: '#/components/schemas/CustomRunResultUpdate'
