@@ -1365,7 +1365,7 @@ components:
       type: object
       title: Run Output Stream Event
       description: >-
-        Server-sent event containing one agent ouptut event. Actual event type
+        Server-sent event containing one agent output event. Actual event type
         is carried inside the data.
       properties:
         id:
