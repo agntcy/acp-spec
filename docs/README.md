@@ -255,6 +255,7 @@ In the sequence above:
 1. The server returns an event with updated message "Hello, how can I help"
 1. The server returns an event with updated message "Hello, how can I help you"
 1. The server returns an event with updated message "Hello, how can I help you today"
+1. The server closes the conenction because the output is complete
 
 ## Agent Manifest
 
