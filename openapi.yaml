@@ -834,7 +834,7 @@ components:
                   title: Callback Support
                   default: false
                   description: >-
-                    this is `true` if the agent supports a webhook to report run
+                    This is `true` if the agent supports a webhook to report run
                     results. If this is `false`, providing a `webhook` at run
                     creation has no effect. If missing, it means `false`
                 streaming:
