@@ -849,7 +849,7 @@ components:
                       type: boolean
                       title: Values Streaming
                       description: >-
-                        this is `true` if the agent supports values streaming.
+                        This is `true` if the agent supports values streaming.
                         If `false` or missing values streaming is not supported.
                     updates:
                       type: boolean
