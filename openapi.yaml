@@ -432,7 +432,7 @@ paths:
           in: path
       responses:
         '200':
-          description: Stream of agent results either as values or updates. Note that the stream of events is carried using the format specified in SSE spec `test/event-stream`
+          description: Stream of agent results either as values or updates. Note that the stream of events is carried using the format specified in SSE spec `text/event-stream`
           content:
             text/event-stream:
               schema:
