@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.1
 info:
   title: Agent Connect Protocol
   version: '0.1'
@@ -160,18 +160,18 @@ paths:
             schema:
               $ref: '#/components/schemas/RunCreate'
         required: true
-      callbacks: 
-        runstatuschange: 
-          "{$request.body#/webhook}": 
+      callbacks:
+        runstatuschange:
+          '{$request.body#/webhook}':
             post:
-              requestBody: 
+              requestBody:
                 required: true
                 content:
                   application/json:
                     schema:
                       $ref: '#/components/schemas/Run'
               responses:
-                "200":
+                '200':
                   description: Your server returns this code if it accepts the callback
       responses:
         '200':
@@ -390,6 +390,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RunOutput'
+        '204':
+          description: No Output Available
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /runs/{run_id}/stream:
+    get:
+      tags:
+        - Runs
+      summary: Stream the run output
+      description: >-
+        Send a stream of events using Server-sent events (SEE). See
+        <https://html.spec.whatwg.org/multipage/server-sent-events.html> for
+        details.
+      operationId: get_run_stream
+      parameters:
+        - description: The ID of the run.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Run Id
+            description: The ID of the run.
+          name: run_id
+          in: path
+      responses:
+        '200':
+          description: >-
+            Stream of agent results either as values or updates. Note that the
+            stream of events is carried using the format specified in SSE spec
+            `text/event-stream`
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/RunOutputStream'
         '204':
           description: No Output Available
         '404':
@@ -771,15 +821,15 @@ components:
                   title: Thread Support
                   default: false
                   description: >-
-                    this is True if the agent supports run threads. If this is
-                    False, then the threads tagged with `Threads` are not
+                    This is `true` if the agent supports run threads. If this is
+                    `false`, then the threads tagged with `Threads` are not
                     available. If missing, it means `false`
                 interrupts:
                   type: boolean
                   title: Interrupt Support
                   default: false
                   description: >-
-                    this is True if the agent runs can interrupt to request
+                    This is `true` if the agent runs can interrupt to request
                     additional input and can be subsequently resumed. If
                     missing, it means `false`
                 callbacks:
@@ -787,20 +837,60 @@ components:
                   title: Callback Support
                   default: false
                   description: >-
-                    this it True if the agent supports a webhook to report run
-                    results. If this is false, providing a `webhook` at run
+                    This is `true` if the agent supports a webhook to report run
+                    results. If this is `false`, providing a `webhook` at run
                     creation has no effect. If missing, it means `false`
+                streaming:
+                  type: object
+                  title: Streaming Modes
+                  description: >-
+                    Streaming modes supported. If missing, streaming is not
+                    supported.  If no mode is supported attempts to stream
+                    output will result in an error.
+                  properties:
+                    values:
+                      type: boolean
+                      title: Values Streaming
+                      description: >-
+                        This is `true` if the agent supports values streaming.
+                        If `false` or missing values streaming is not supported.
+                    custom:
+                      type: boolean
+                      title: Streaming Custom Objects
+                      description: >-
+                        This is `true` if the agent supports streaming of agent
+                        specified objects. If `false` or missing, custom
+                        streaming is not supported.
             input:
               type: object
               description: >-
                 This object contains an instance of an OpenAPI schema object,
                 formatted as per the OpenAPI specs:
                 https://spec.openapis.org/oas/v3.1.1.html#schema-object
-              example:
-                type: object
-                required:
-                  - name
-                properties:
+              examples:
+                - type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    age:
+                      type: integer
+                      format: int32
+                      minimum: 0
+            output:
+              type: object
+              description: >-
+                This object contains an instance of an OpenAPI schema object,
+                formatted as per the OpenAPI specs:
+                https://spec.openapis.org/oas/v3.1.1.html#schema-object
+              examples:
+                - type: object
+                  required:
+                    - name
+                  properties: null
                   name:
                     type: string
                   address:
@@ -809,17 +899,18 @@ components:
                     type: integer
                     format: int32
                     minimum: 0
-            output:
+            custom_streaming_update:
               type: object
               description: >-
-                This object contains an instance of an OpenAPI schema object,
-                formatted as per the OpenAPI specs:
+                This describes the format of an Update in the streaming.  Must
+                be specified if `streaming.custom` capability is true and cannot
+                be specified otherwise. Format follows:
                 https://spec.openapis.org/oas/v3.1.1.html#schema-object
-              example:
-                type: object
-                required:
-                  - name
-                properties:
+              examples:
+                - type: object
+                  required:
+                    - name
+                  properties: null
                   name:
                     type: string
                   address:
@@ -838,11 +929,11 @@ components:
                 contains an instance of an OpenAPI schema object, formatted as
                 per the OpenAPI specs:
                 https://spec.openapis.org/oas/v3.1.1.html#schema-object
-              example:
-                type: object
-                required:
-                  - name
-                properties:
+              examples:
+                - type: object
+                  required:
+                    - name
+                  properties: null
                   name:
                     type: string
                   address:
@@ -857,11 +948,11 @@ components:
                 This object contains an instance of an OpenAPI schema object,
                 formatted as per the OpenAPI specs:
                 https://spec.openapis.org/oas/v3.1.1.html#schema-object
-              example:
-                type: object
-                required:
-                  - name
-                properties:
+              examples:
+                - type: object
+                  required:
+                    - name
+                  properties: null
                   name:
                     type: string
                   address:
@@ -891,11 +982,11 @@ components:
                       This object contains an instance of an OpenAPI schema
                       object, formatted as per the OpenAPI specs:
                       https://spec.openapis.org/oas/v3.1.1.html#schema-object
-                    example:
-                      type: object
-                      required:
-                        - name
-                      properties:
+                    examples:
+                      - type: object
+                        required:
+                          - name
+                        properties: null
                         name:
                           type: string
                         address:
@@ -910,11 +1001,11 @@ components:
                       This object contains an instance of an OpenAPI schema
                       object, formatted as per the OpenAPI specs:
                       https://spec.openapis.org/oas/v3.1.1.html#schema-object
-                    example:
-                      type: object
-                      required:
-                        - name
-                      properties:
+                    examples:
+                      - type: object
+                        required:
+                          - name
+                        properties: null
                         name:
                           type: string
                         address:
@@ -1093,10 +1184,10 @@ components:
         This object contains an instance of an OpenAPI schema object, formatted
         as per the OpenAPI specs:
         https://spec.openapis.org/oas/v3.1.1.html#security-scheme-object-0
-      example:
-        type: apiKey
-        name: api-key
-        in: header
+      examples:
+        - type: apiKey
+          name: api-key
+          in: header
     AgentSearchRequest:
       properties:
         name:
@@ -1161,7 +1252,20 @@ components:
           format: uri
           title: Status change webhook
           description: >-
-            Webhook to call upon change of run status. This is a url that accepts a POST containing the `Run` object as body. See Callbacks definition.
+            Webhook to call upon change of run status. This is a url that
+            accepts a POST containing the `Run` object as body. See Callbacks
+            definition.
+        streaming:
+          type: string
+          enum:
+            - values
+            - custom
+          title: Streaming Mode
+          description: >-
+            If populated, indicates that the client requests to stream results
+            with the specified streaming mode. The requested streaming mode must
+            be one of the one supported by the agent as declared in its
+            manifest.
       required:
         - agent_id
     Run:
@@ -1280,6 +1384,58 @@ components:
           description: The ID of the run.
         result:
           $ref: '#/components/schemas/OutputSchema'
+    RunOutputStream:
+      type: object
+      title: Run Output Stream Event
+      description: >-
+        Server-sent event containing one agent output event. Actual event type
+        is carried inside the data.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the event
+          title: Event ID
+        event:
+          type: string
+          enum:
+            - agent_event
+          description: >-
+            Event type. This is the constant string `agent_event` to be
+            compatible with SSE spec. The actual type differentiation is done in
+            the event itself.
+        data:
+          title: Stream Event Payload
+          description: >-
+            A serialized JSON data structure carried in the SSE event data
+            field. The event can carry either a full result, if streaming mode
+            is `values` or an custom update if streaming mode is `custom`
+          oneOf:
+            - $ref: '#/components/schemas/RunResult'
+            - $ref: '#/components/schemas/CustomRunResultUpdate'
+          discriminator:
+            propertyName: type
+            mapping:
+              result: '#/components/schemas/RunResult'
+              custom: '#/components/schemas/CustomRunResultUpdate'
+    CustomRunResultUpdate:
+      title: Custom Run Result Update
+      description: >-
+        Object holding a custom defined update of the agent result during
+        streaming.
+      type: object
+      properties:
+        type:
+          title: Output Type
+          type: string
+          enum:
+            - custom
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: The ID of the run.
+        update:
+          $ref: '#/components/schemas/StreamUpdateSchema'
     RunError:
       title: Run Error
       description: Run terminated with an error
@@ -1319,26 +1475,33 @@ components:
       type: object
       title: Input Schema
       description: >-
-        The output of the graph. Schema is described in the agent spec under
-        'input'.
+        The input to the agent. The schema is described in Agent Manifest under
+        'spec.thread_state'.'input'.
     OutputSchema:
       type: object
       title: Output Schema
       description: >-
-        The input to the graph. Schema is described in the agent spec under
-        'output'.
+        The output of the agent. The schema is described in Agent Manifest under
+        'spec.output'.
     ConfigSchema:
       type: object
       title: Config
       description: >-
-        The configuration for this agent. Schema is described in the agent spec
-        under 'config'. If missing, default values are used.
+        The configuration for this agent. The schema is described in Agent
+        Manifest under 'spec.config'. If missing, default values are used.
     ThreadStateSchema:
       type: object
       title: Thread State Schema
       description: >-
-        The thread state. The Schema is described in the agent spec under
-        'thread_state'.
+        The thread state. The schema is described in Agent Manifest under
+        'spec.thread_state'.
+    StreamUpdateSchema:
+      type: object
+      title: Stream Update Schema
+      description: >-
+        An update in the SSE event streaming where streaming mode is set to
+        custom. The schema is described in Agent Manifest under
+        'spec.custom_streaming_update'.
     InterruptPayloadSchema:
       type: object
       title: Interrupt Payload
@@ -1347,7 +1510,7 @@ components:
         polimorphic object, which means a schema structured with `oneOf` and
         `discriminator`. The discriminator is the `interrupt_type`, while the
         schemas will be the ones defined in the agent spec under
-        `interrupts`/`interrupt_payload` For example:         oneOf:
+        `interrupts`/`interrupt_payload` For example:          oneOf:
           - $ref: '#/components/schemas/ApprovalInterruptPayload'
           - $ref: '#/components/schemas/QuestionInterruptPayload'
         discriminator:
@@ -1363,7 +1526,7 @@ components:
         schema describes a polimorphic object, which means a schema structured
         with `oneOf` and `discriminator`. The discriminator is the
         `interrupt_type`, while the schemas will be those defined in the agent
-        spec under `interrupts`/`resume_payload` For example:         oneOf:
+        spec under `interrupts`/`resume_payload` For example:          oneOf:
           - $ref: '#/components/schemas/ApprovalResumePayload'
           - $ref: '#/components/schemas/QuestionResumePayload'
         discriminator:
