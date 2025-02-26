@@ -224,7 +224,7 @@ ACP implements streaming using Server Sent Events specified here: https://html.s
 In a nutshell, the client keeps the HTTP connection open and receives a stream of events from the server, where each event carries an update of the run result.
 
 ACP supports 2 streaming modes:
-1. **values** where each event contains a full instance of the RunResult, which fully replace the previous update.
+1. **result** where each event contains a full instance of the RunResult, which fully replace the previous update.
 2. **custom** where the schema of the event is left unspecified by ACP, which it can be specified in the specific agent manifest under `spec.custom_streaming_update`
 
 #### Start a Run and stream output until completion
@@ -232,7 +232,7 @@ ACP supports 2 streaming modes:
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
-    C->>+S: POST /runs {agent_id, input, config, metadata, streaming='values'}
+    C->>+S: POST /runs {agent_id, input, config, metadata, streaming='result'}
     S->>-C: Run={run_id, status="pending"}
     C->>+S: GET /runs/{run_id}/stream 
     rect rgb(240,240,240)
@@ -246,7 +246,7 @@ sequenceDiagram
     end
 
 In the sequence above:
-1. The client requests to start a run on a specific agent specifying streaming mode = 'values'
+1. The client requests to start a run on a specific agent specifying streaming mode = 'result'
 1. The server returns a run object 
 1. The client request the output streaming and keeps the connection open
 1. The server returns an event with message="Hello"
