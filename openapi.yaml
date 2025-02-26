@@ -433,9 +433,10 @@ paths:
       responses:
         '200':
           description: >-
-            Stream of agent results either as `RunResult` objects or custom objects, according to the specific streaming mode requested. Note that the
-            stream of events is carried using the format specified in SSE spec
-            `text/event-stream`
+            Stream of agent results either as `RunResult` objects or custom
+            objects, according to the specific streaming mode requested. Note
+            that the stream of events is carried using the format specified in
+            SSE spec `text/event-stream`
           content:
             text/event-stream:
               schema:
@@ -853,14 +854,19 @@ components:
                       title: Result Streaming
                       description: >-
                         This is `true` if the agent supports result streaming.
-                        If `false` or missing, result streaming is not supported.
-                        Result streaming consists of a stream of objects of type `RunResult`, where each one sent over the stream fully replace the previus one.
+                        If `false` or missing, result streaming is not
+                        supported. Result streaming consists of a stream of
+                        objects of type `RunResult`, where each one sent over
+                        the stream fully replace the previus one.
                     custom:
                       type: boolean
                       title: Custom Objects Streaming
                       description: >-
-                        This is `true` if the agent supports custom objects streaming. If `false` or missing, custom
-                        streaming is not supported. Custom Objects streaming consists of a stream of object whose schema is specified by the agent in its manifest under `specs.custom_streaming_update`.
+                        This is `true` if the agent supports custom objects
+                        streaming. If `false` or missing, custom streaming is
+                        not supported. Custom Objects streaming consists of a
+                        stream of object whose schema is specified by the agent
+                        in its manifest under `specs.custom_streaming_update`.
             input:
               type: object
               description: >-
@@ -1261,8 +1267,8 @@ components:
           description: >-
             If populated, indicates that the client requests to stream results
             with the specified streaming mode. The requested streaming mode must
-            be one of the one supported by the agent as declared in its
-            manifest under `specs.capabilities`
+            be one of the one supported by the agent as declared in its manifest
+            under `specs.capabilities`
       required:
         - agent_id
     StreamingMode:
@@ -1309,7 +1315,13 @@ components:
           description: >-
             The status of the run. One of 'pending', 'error', 'success',
             'timeout', 'interrupted'.
-      required: ['creation', 'run_id', 'agent_id', 'created_at', 'updated_at', 'status']
+      required:
+        - creation
+        - run_id
+        - agent_id
+        - created_at
+        - updated_at
+        - status
     RunStatus:
       type: string
       enum:
@@ -1383,13 +1395,19 @@ components:
           description: The ID of the run.
         status:
           title: Run Status
-          description: >- 
-            Status of the Run when this result was generated. This is particurarly useful when this data structure is used for streaming results.
-            As the server can indicate an interrupt or an error condition while streaming the result.
+          description: >-
+            Status of the Run when this result was generated. This is
+            particurarly useful when this data structure is used for streaming
+            results. As the server can indicate an interrupt or an error
+            condition while streaming the result.
           $ref: '#/components/schemas/RunStatus'
         result:
           $ref: '#/components/schemas/OutputSchema'
-      required: ['type', 'run_id', 'status', 'result']
+      required:
+        - type
+        - run_id
+        - status
+        - result
     RunOutputStream:
       type: object
       title: Run Output Stream Event
@@ -1413,8 +1431,8 @@ components:
           title: Stream Event Payload
           description: >-
             A serialized JSON data structure carried in the SSE event data
-            field. The event can carry either a full `RunResult`, if streaming mode
-            is `result` or an custom update if streaming mode is `custom`
+            field. The event can carry either a full `RunResult`, if streaming
+            mode is `result` or an custom update if streaming mode is `custom`
           oneOf:
             - $ref: '#/components/schemas/RunResult'
             - $ref: '#/components/schemas/CustomRunResultUpdate'
@@ -1423,7 +1441,10 @@ components:
             mapping:
               result: '#/components/schemas/RunResult'
               custom: '#/components/schemas/CustomRunResultUpdate'
-      required: ['id', 'event', 'data']
+      required:
+        - id
+        - event
+        - data
     CustomRunResultUpdate:
       title: Custom Run Result Update
       description: >-
@@ -1447,7 +1468,11 @@ components:
           $ref: '#/components/schemas/RunStatus'
         update:
           $ref: '#/components/schemas/StreamUpdateSchema'
-      required: ['type', 'run_id', 'status', 'update']
+      required:
+        - type
+        - run_id
+        - status
+        - update
     RunError:
       title: Run Error
       description: Run terminated with an error
@@ -1471,7 +1496,11 @@ components:
           type: string
           title: Error Description
           description: description of the error
-      required: ['type', 'run_id', 'errcode', 'description']
+      required:
+        - type
+        - run_id
+        - errcode
+        - description
     RunInterrupt:
       title: Run Interrupt
       description: Interrupt occurred during a Run
@@ -1484,7 +1513,9 @@ components:
             - interrupt
         interrupt:
           $ref: '#/components/schemas/InterruptPayloadSchema'
-      required: ['type', 'interrupt']
+      required:
+        - type
+        - interrupt
     InputSchema:
       type: object
       title: Input Schema
@@ -1561,7 +1592,8 @@ components:
           type: object
           title: Metadata
           description: Free form metadata for this thread
-      required: ['agent_id']
+      required:
+        - agent_id
     ThreadSearchRequest:
       properties:
         agent_id:
@@ -1610,4 +1642,6 @@ components:
           type: object
           title: Metadata
           description: Free form metadata for this thread
-      required: ['thread_id', 'agent_id']
+      required:
+        - thread_id
+        - agent_id
