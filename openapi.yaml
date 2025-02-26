@@ -857,7 +857,7 @@ components:
                         If `false` or missing, result streaming is not
                         supported. Result streaming consists of a stream of
                         objects of type `RunResult`, where each one sent over
-                        the stream fully replace the previus one.
+                        the stream fully replace the previous one.
                     custom:
                       type: boolean
                       title: Custom Objects Streaming
