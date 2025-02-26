@@ -433,7 +433,7 @@ paths:
       responses:
         '200':
           description: >-
-            Stream of agent results either as values or updates. Note that the
+            Stream of agent results either as `RunResult` objects or custom objects, according to the specific streaming mode requested. Note that the
             stream of events is carried using the format specified in SSE spec
             `text/event-stream`
           content:
@@ -848,19 +848,19 @@ components:
                     supported.  If no mode is supported attempts to stream
                     output will result in an error.
                   properties:
-                    values:
+                    result:
                       type: boolean
-                      title: Values Streaming
+                      title: Result Streaming
                       description: >-
-                        This is `true` if the agent supports values streaming.
-                        If `false` or missing values streaming is not supported.
+                        This is `true` if the agent supports result streaming.
+                        If `false` or missing, result streaming is not supported.
+                        Result streaming consists of a stream of objects of type `RunResult`, where each one sent over the stream fully replace the previus one.
                     custom:
                       type: boolean
-                      title: Streaming Custom Objects
+                      title: Custom Objects Streaming
                       description: >-
-                        This is `true` if the agent supports streaming of agent
-                        specified objects. If `false` or missing, custom
-                        streaming is not supported.
+                        This is `true` if the agent supports custom objects streaming. If `false` or missing, custom
+                        streaming is not supported. Custom Objects streaming consists of a stream of object whose schema is specified by the agent in its manifest under `specs.custom_streaming_update`.
             input:
               type: object
               description: >-
@@ -1258,14 +1258,14 @@ components:
         streaming:
           type: string
           enum:
-            - values
+            - result
             - custom
           title: Streaming Mode
           description: >-
             If populated, indicates that the client requests to stream results
             with the specified streaming mode. The requested streaming mode must
             be one of the one supported by the agent as declared in its
-            manifest.
+            manifest under `specs.capabilities`
       required:
         - agent_id
     Run:
@@ -1407,8 +1407,8 @@ components:
           title: Stream Event Payload
           description: >-
             A serialized JSON data structure carried in the SSE event data
-            field. The event can carry either a full result, if streaming mode
-            is `values` or an custom update if streaming mode is `custom`
+            field. The event can carry either a full `RunResult`, if streaming mode
+            is `result` or an custom update if streaming mode is `custom`
           oneOf:
             - $ref: '#/components/schemas/RunResult'
             - $ref: '#/components/schemas/CustomRunResultUpdate'
