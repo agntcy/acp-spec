@@ -1017,7 +1017,7 @@ components:
                 required:
                   - interrupt_type
                   - resume_payload
-                  - resume_input
+                  - interrupt_payload
           required:
             - capabilities
             - input
@@ -1256,10 +1256,7 @@ components:
             accepts a POST containing the `Run` object as body. See Callbacks
             definition.
         streaming:
-          type: string
-          enum:
-            - result
-            - custom
+          $ref: '#/components/schemas/StreamingMode'
           title: Streaming Mode
           description: >-
             If populated, indicates that the client requests to stream results
@@ -1268,6 +1265,11 @@ components:
             manifest under `specs.capabilities`
       required:
         - agent_id
+    StreamingMode:
+      type: string
+      enum:
+        - result
+        - custom
     Run:
       title: Agent Run
       description: Holds all the information of a run
@@ -1302,17 +1304,20 @@ components:
           title: Updated At
           description: The last time the run was updated.
         status:
-          type: string
-          enum:
-            - pending
-            - error
-            - success
-            - timeout
-            - interrupted
+          $ref: '#/components/schemas/RunStatus'
           title: Status
           description: >-
             The status of the run. One of 'pending', 'error', 'success',
             'timeout', 'interrupted'.
+      required: ['creation', 'run_id', 'agent_id', 'created_at', 'updated_at', 'status']
+    RunStatus:
+      type: string
+      enum:
+        - pending
+        - error
+        - success
+        - timeout
+        - interrupted
     RunSearchRequest:
       properties:
         agent_id:
@@ -1321,13 +1326,7 @@ components:
           title: Agent Id
           description: Matches all the Runs associated with the specified Agent ID.
         status:
-          type: string
-          enum:
-            - pending
-            - error
-            - success
-            - timeout
-            - interrupted
+          $ref: '#/components/schemas/RunStatus'
           title: Status
           description: >-
             Matches all the Runs associated with the specified status. One of
@@ -1382,8 +1381,15 @@ components:
           format: uuid
           title: Run Id
           description: The ID of the run.
+        status:
+          title: Run Status
+          description: >- 
+            Status of the Run when this result was generated. This is particurarly useful when this data structure is used for streaming results.
+            As the server can indicate an interrupt or an error condition while streaming the result.
+          $ref: '#/components/schemas/RunStatus'
         result:
           $ref: '#/components/schemas/OutputSchema'
+      required: ['type', 'run_id', 'status', 'result']
     RunOutputStream:
       type: object
       title: Run Output Stream Event
@@ -1417,6 +1423,7 @@ components:
             mapping:
               result: '#/components/schemas/RunResult'
               custom: '#/components/schemas/CustomRunResultUpdate'
+      required: ['id', 'event', 'data']
     CustomRunResultUpdate:
       title: Custom Run Result Update
       description: >-
@@ -1434,8 +1441,13 @@ components:
           format: uuid
           title: Run Id
           description: The ID of the run.
+        status:
+          title: Run Status
+          description: Status of the Run when this result was generated
+          $ref: '#/components/schemas/RunStatus'
         update:
           $ref: '#/components/schemas/StreamUpdateSchema'
+      required: ['type', 'run_id', 'status', 'update']
     RunError:
       title: Run Error
       description: Run terminated with an error
@@ -1459,6 +1471,7 @@ components:
           type: string
           title: Error Description
           description: description of the error
+      required: ['type', 'run_id', 'errcode', 'description']
     RunInterrupt:
       title: Run Interrupt
       description: Interrupt occurred during a Run
@@ -1471,6 +1484,7 @@ components:
             - interrupt
         interrupt:
           $ref: '#/components/schemas/InterruptPayloadSchema'
+      required: ['type', 'interrupt']
     InputSchema:
       type: object
       title: Input Schema
@@ -1547,6 +1561,7 @@ components:
           type: object
           title: Metadata
           description: Free form metadata for this thread
+      required: ['agent_id']
     ThreadSearchRequest:
       properties:
         agent_id:
@@ -1595,3 +1610,4 @@ components:
           type: object
           title: Metadata
           description: Free form metadata for this thread
+      required: ['thread_id', 'agent_id']
