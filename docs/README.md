@@ -229,6 +229,7 @@ ACP supports 2 streaming modes:
 
 #### Start a Run and stream output until completion
 
+```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
@@ -244,6 +245,7 @@ sequenceDiagram
     S->>C: StreamEvent={id="5",, event="agent_event", data={run_id, type="result", result={"message": "Hello, how can I help you today"}}}
     S->>C: Close Connection
     end
+```
 
 In the sequence above:
 1. The client requests to start a run on a specific agent specifying streaming mode = 'result'
