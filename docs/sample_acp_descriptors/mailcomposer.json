@@ -3,7 +3,7 @@
         "ref": {
           "name": "org.agntcy.mailcomposer",
           "version": "0.0.1",
-          "url": "https://github.com/agntcy/acp-spec/blob/main/docs/sample_manifests/mailcomposer.json"
+          "url": "https://github.com/agntcy/acp-spec/blob/main/docs/sample_acp_descriptors/mailcomposer.json"
         },
         "description": "This agent is able to collect user intent through a chat interface and compose wonderful emails based on that."
       },
@@ -113,26 +113,5 @@
             }
           }
         ]
-      },
-    "dependencies": [
-      {
-        "name": "org.agntcy.sample-agent-2",
-        "version": "0.0.1"
-      },
-      {
-        "name": "org.agntcy.sample-agent-3",
-        "version": "0.0.1"
       }
-    ],
-    "deployments": [
-      {
-        "type": "source_code",
-        "name": "src",
-        "url": "git@github.com:agntcy/mailcomposer.git",
-        "framework_config": {
-          "framework_type": "langgraph",
-          "graph": "mailcomposer"
-        }
-      }
-    ]
   }
