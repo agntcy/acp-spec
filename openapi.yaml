@@ -9,11 +9,11 @@ tags:
       server.  This means that a client of this server can start a Run on any of
       the Agents supported by this server.
 
-      Details of a supported agent are kept in an agent manifest. The agent
-      manifest defines:
+      Details of a supported agent are kept in an agent spec. The agent
+      spec defines:
         - the schemas for configuration, input, output, and interrupts the agent expects or produces.
 
-      See `Agent` and `AgentManifest` models below for more info.
+      See `Agent` and `AgentDetails` models below for more info.
   - name: Runs
     description: >-
       A Run represents an execution of an agent.
@@ -109,13 +109,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /agents/{agent_id}/manifest:
+  /agents/{agent_id}/details:
     get:
       tags:
         - Agents
-      summary: Get Agent Manifest from its id
-      description: Get an agent manifest by agent ID.
-      operationId: get_agent_manifest_by_id
+      summary: Get Agent Details from its id
+      description: Get agent details by agent ID.
+      operationId: get_agent_details_by_id
       parameters:
         - description: The ID of the agent.
           required: true
@@ -132,7 +132,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AgentManifest'
+                $ref: '#/components/schemas/AgentDetails'
         '404':
           description: Not Found
           content:
@@ -762,7 +762,7 @@ components:
       type: object
       properties:
         ref:
-          $ref: '#/components/schemas/AgentManifestRef'
+          $ref: '#/components/schemas/AgentRef'
         description:
           description: >-
             Description of this agent, which should include what the intended
@@ -773,31 +773,31 @@ components:
       required:
         - ref
         - description
-    AgentManifestRef:
-      title: Agent Manifest Reference
-      description: Reference to an Agent Manifest, it includes name, version and a locator.
+    AgentRef:
+      title: Agent Reference
+      description: Reference to an Agent Descriptor in the Agent Directory, it includes name, version and a locator.
       type: object
       properties:
         name:
-          description: Name of the agent that identifies the agent in its manifest
+          description: Name of the agent that identifies the agent in its descriptor
           title: Name
           type: string
         version:
           description: >-
-            Version of the agent in its manifest. Should be formatted according
+            Version of the agent in its descriptor. Should be formatted according
             to semantic versioning (https://semver.org)
           title: Version
           type: string
         url:
-          title: Manifest URL
-          description: URL of the manifest. Can be a network location or a file.
+          title: Agent Descriptor URL
+          description: URL of the descriptor. Can be a network location or a file.
           type: string
           format: uri
       required:
         - name
         - version
-    AgentManifest:
-      title: Agent Manifest
+    AgentDetails:
+      title: Agent Details
       description: >-
         Describe all the details of an agent, including how to use, how to
         deploy and its dependencies.
@@ -866,7 +866,7 @@ components:
                         streaming. If `false` or missing, custom streaming is
                         not supported. Custom Objects streaming consists of a
                         stream of object whose schema is specified by the agent
-                        in its manifest under `specs.custom_streaming_update`.
+                        in its details under `specs.custom_streaming_update`.
             input:
               type: object
               description: >-
@@ -1029,171 +1029,9 @@ components:
             - input
             - output
             - config
-        dependencies:
-          title: Agent Dependencies
-          description: List of all other agents this agent depends on
-          type: array
-          items:
-            $ref: '#/components/schemas/AgentManifestRef'
-        deployments:
-          title: Deployment Options
-          description: >-
-            List of possible methods to instantiate or consume the agent.  Any
-            of the available option could be used.
-
-            Every option could be associated with a unique name within this
-            agent. If present, when another manifest refers to this manifest, it
-            can also select the preferred deployment option.
-          type: array
-          items:
-            oneOf:
-              - $ref: '#/components/schemas/SourceCodeDeployment'
-              - $ref: '#/components/schemas/RemoteServiceDeployment'
-              - $ref: '#/components/schemas/DockerDeployment'
-            discriminator:
-              propertyName: type
-              mapping:
-                source_code: '#/components/schemas/SourceCodeDeployment'
-                remote_service: '#/components/schemas/RemoteServiceDeployment'
-                docker: '#/components/schemas/DockerDeployment'
       required:
         - metadata
         - specs
-    SourceCodeDeployment:
-      title: Source Code Deployment
-      description: >-
-        Describes the source code where the agent is available. It specifies
-        also the type of deployer that it supports.
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-            - source_code
-        name:
-          type: string
-          title: Deployment Option Name
-          description: >-
-            Name this deployment option is referred to within this agent. This
-            is needed to indicate which one is preferred when this manifest is
-            referred. Can be omitted, in such case selection is not possible.
-        url:
-          title: Source Code Locator
-          description: >-
-            Location of the source code. E.g. path to code root, github repo url
-            etc.
-          type: string
-          format: uri
-        framework_config:
-          oneOf:
-            - $ref: '#/components/schemas/LangGraphConfig'
-            - $ref: '#/components/schemas/LlamaIndexConfig'
-          discriminator:
-            propertyName: framework_type
-            mapping:
-              langgraph: '#/components/schemas/LangGraphConfig'
-              llamaindex: '#/components/schemas/LlamaIndexConfig'
-      required:
-        - type
-        - url
-        - framework_config
-    LangGraphConfig:
-      title: Langgraph Config
-      description: Describes langgraph based agent deployment config
-      type: object
-      properties:
-        framework_type:
-          type: string
-          enum:
-            - langgraph
-        graph:
-          type: string
-      required:
-        - framework_type
-        - graph
-    LlamaIndexConfig:
-      title: Llamaindex Config
-      description: Describes llamaindex based agent deployment config
-      type: object
-      properties:
-        framework_type:
-          type: string
-          enum:
-            - llamaindex
-        path:
-          type: string
-      required:
-        - framework_type
-        - path
-    RemoteServiceDeployment:
-      title: Remote Service
-      description: Describes the network endpoint where the agent is available
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-            - remote_service
-        protocol:
-          $ref: '#/components/schemas/AgentConnectProtocol'
-      required:
-        - type
-        - protocol
-    DockerDeployment:
-      title: Docker Deployment
-      description: Describes the docker deployment for this agent
-      properties:
-        type:
-          type: string
-          enum:
-            - docker
-        image:
-          title: Agent Docker image
-          description: Container image for the agent
-          type: string
-          format: uri
-        protocol:
-          $ref: '#/components/schemas/AgentConnectProtocol'
-      required:
-        - type
-        - image
-        - protocol
-    AgentConnectProtocol:
-      title: ACP Details
-      description: ACP endpoint description
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-            - ACP
-        url:
-          title: ACP URL
-          description: URL pointing to the ACP endpoint root.
-          type: string
-          format: uri
-        agent_id:
-          title: Agent identifier
-          type: string
-          description: >-
-            Agent identifier in ACP server. If missing, the first returned agent
-            with matching name and version should be used.
-          format: uuid
-        authentication:
-          $ref: '#/components/schemas/SecurityScheme'
-      required:
-        - type
-        - url
-    SecurityScheme:
-      type: object
-      description: >-
-        This object contains an instance of an OpenAPI schema object, formatted
-        as per the OpenAPI specs:
-        https://spec.openapis.org/oas/v3.1.1.html#security-scheme-object-0
-      examples:
-        - type: apiKey
-          name: api-key
-          in: header
     AgentSearchRequest:
       properties:
         name:
@@ -1267,7 +1105,7 @@ components:
           description: >-
             If populated, indicates that the client requests to stream results
             with the specified streaming mode. The requested streaming mode must
-            be one of the one supported by the agent as declared in its manifest
+            be one of the one supported by the agent as declared in its details
             under `specs.capabilities`
       required:
         - agent_id
@@ -1520,32 +1358,32 @@ components:
       type: object
       title: Input Schema
       description: >-
-        The input to the agent. The schema is described in Agent Manifest under
+        The input to the agent. The schema is described in Agent Details under
         'spec.thread_state'.'input'.
     OutputSchema:
       type: object
       title: Output Schema
       description: >-
-        The output of the agent. The schema is described in Agent Manifest under
+        The output of the agent. The schema is described in Agent Details under
         'spec.output'.
     ConfigSchema:
       type: object
       title: Config
       description: >-
         The configuration for this agent. The schema is described in Agent
-        Manifest under 'spec.config'. If missing, default values are used.
+        Details under 'spec.config'. If missing, default values are used.
     ThreadStateSchema:
       type: object
       title: Thread State Schema
       description: >-
-        The thread state. The schema is described in Agent Manifest under
+        The thread state. The schema is described in Agent Details under
         'spec.thread_state'.
     StreamUpdateSchema:
       type: object
       title: Stream Update Schema
       description: >-
         An update in the SSE event streaming where streaming mode is set to
-        custom. The schema is described in Agent Manifest under
+        custom. The schema is described in Agent Details under
         'spec.custom_streaming_update'.
     InterruptPayloadSchema:
       type: object
