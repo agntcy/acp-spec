@@ -137,7 +137,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ACPManifest'
+                $ref: '#/components/schemas/AgentACPManifest'
         '404':
           description: Not Found
           content:
