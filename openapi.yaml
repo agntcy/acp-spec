@@ -13,12 +13,12 @@ tags:
       specifies the schemas of the objects carried by ACP for  configuration,
       input, output, interrupts and state. 
 
-      Details of the ACP features and the schemas are kept in the ACP manifest
+      Details of the ACP features and the schemas are kept in the ACP descriptor
       of the specific agent.  This object can be retrieved through this ACP
       interface or is found in the ACP extension of the agent record in the
       agent directory.
 
-      See `Agent` and `AgentACPManifest` models below for more info.
+      See `Agent` and `AgentACPDescriptor` models below for more info.
   - name: Runs
     description: >-
       A Run represents an execution of an agent.
@@ -114,13 +114,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /agents/{agent_id}/acpmanifest:
+  /agents/{agent_id}/descriptor:
     get:
       tags:
         - Agents
-      summary: Get Agent ACP Manifest from its id
-      description: Get agent ACP manifest by agent ID.
-      operationId: get_acp_manifest_by_id
+      summary: Get Agent ACP Descriptor from its id
+      description: Get agent ACP descriptor by agent ID.
+      operationId: get_acp_descriptor_by_id
       parameters:
         - description: The ID of the agent.
           required: true
@@ -137,7 +137,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AgentACPManifest'
+                $ref: '#/components/schemas/AgentACPDescriptor'
         '404':
           description: Not Found
           content:
@@ -803,8 +803,8 @@ components:
       required:
         - name
         - version
-    AgentACPManifest:
-      title: Agent ACP Manifest
+    AgentACPDescriptor:
+      title: Agent ACP Descriptor
       description: >-
         Describe all the ACP specs of an agent, including schemas and protocol
         features.
@@ -873,7 +873,7 @@ components:
                         streaming. If `false` or missing, custom streaming is
                         not supported. Custom Objects streaming consists of a
                         stream of object whose schema is specified by the agent
-                        ACP manifest under `specs.custom_streaming_update`.
+                        ACP descriptor under `specs.custom_streaming_update`.
             input:
               type: object
               description: >-
@@ -1113,7 +1113,7 @@ components:
             If populated, indicates that the client requests to stream results
             with the specified streaming mode. The requested streaming mode must
             be one of the one supported by the agent as declared in agent ACP
-            manifest  under `specs.capabilities`
+            descriptor  under `specs.capabilities`
       required:
         - agent_id
     StreamingMode:
@@ -1365,32 +1365,32 @@ components:
       type: object
       title: Input Schema
       description: >-
-        The input to the agent. The schema is described in agent ACP manifest
+        The input to the agent. The schema is described in agent ACP descriptor
         under 'spec.thread_state'.'input'.
     OutputSchema:
       type: object
       title: Output Schema
       description: >-
-        The output of the agent. The schema is described in agent ACP manifest
+        The output of the agent. The schema is described in agent ACP descriptor
         under 'spec.output'.
     ConfigSchema:
       type: object
       title: Config
       description: >-
         The configuration for this agent. The schema is described in agent ACP
-        manifest under 'spec.config'. If missing, default values are used.
+        descriptor under 'spec.config'. If missing, default values are used.
     ThreadStateSchema:
       type: object
       title: Thread State Schema
       description: >-
-        The thread state. The schema is described in agent ACP manifest under
+        The thread state. The schema is described in agent ACP descriptor under
         'spec.thread_state'.
     StreamUpdateSchema:
       type: object
       title: Stream Update Schema
       description: >-
         An update in the SSE event streaming where streaming mode is set to
-        custom. The schema is described in agent ACP manifest under
+        custom. The schema is described in agent ACP descriptor under
         'spec.custom_streaming_update'.
     InterruptPayloadSchema:
       type: object
