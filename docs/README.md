@@ -6,16 +6,16 @@ Explore the ACP specification by browsing the OpenAPI view <https://agntcy.githu
 
 Learn how to use the API by looking at [API Usage Flows](#api-usage-flows)
 
-Learn about Agent Manifest and its usage [here](#agent-manifest)
+Learn about Agent ACP Descriptor and its usage [here](#agent-acp-descriptor)
 
-Explore tools for ACP and Agent Manifest in the [Agent Control SDK Repo](agntcy.github.io/acp-sdk)
+Explore tools for ACP and Agent ACP Descriptors in the [Agent Control SDK Repo](agntcy.github.io/acp-sdk)
 
 ## API Usage Flows
 
 ### Agents Retrieval APIs
 
 ACP offers an API to search for the agents served by the ACP server.
-Once a client has an agent identifier `AgentID`, it can use it to either retrieve the agent manifest or to control agent runs.
+Once a client has an agent identifier `AgentID`, it can use it to either retrieve the agent descriptor or to control agent runs.
 
 #### Retrieve all agents supported by the server
 In this case the client is doing a search of all agents in the server without specifying any search filter. Results is a list of agents.
@@ -29,7 +29,7 @@ sequenceDiagram
 ```
 
 #### Retrieve an agent from its name and version
-In this case the client known name and version of an agent (e.g. learnt from the manifest) and wants to retrieve its `id` to interact with the agent.
+In this case the client knows name and version of an agent (e.g. learnt from the record in the Agent Directory) and wants to retrieve its `id` to interact with the agent.
 
 ```mermaid
 sequenceDiagram
@@ -39,15 +39,15 @@ sequenceDiagram
     S->>-C: AgentList = [{id, metadata}]
 ```
 
-#### Retrieve agent manifest from its identifier
-In this case the client known the agent id and wants to retrieve its manifest to learn about the capabilities supported and the data schemas to use.
+#### Retrieve agent descriptor from its identifier
+In this case the client knows the agent id and wants to retrieve its descriptor to learn about the capabilities supported and the data schemas to use.
 
 ```mermaid
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
-    C->>+S: GET /agents/agent/{agent_id}/manifest
-    S->>-C: AgentManifest={...}
+    C->>+S: GET /agents/agent/{agent_id}/descriptor
+    S->>-C: AgentACPDescriptor={...}
 ```
 
 ### Runs
@@ -81,7 +81,7 @@ In the sequence above:
 1. The server returns the final result of the run.
 
 >
-> Note that the format of the input and the configuration are not specified by ACP, but they are defined in the agent manifest.
+> Note that the format of the input and the configuration are not specified by ACP, but they are defined in the agent descriptor.
 >
 
 #### Start a Run of an Agent and block until completion
@@ -104,7 +104,7 @@ In the sequence above:
 1. The server returns the final result of the run. Note that in case the timeout expired before, the server would have returned no content.
 
 #### Start a Run of an Agent with a callback
-Agents can support callbacks, i.e. asynchronously call back the client upon run status change. The support for interrupts is signaled in the agent manifest.
+Agents can support callbacks, i.e. asynchronously call back the client upon run status change. The support for interrupts is signaled in the agent descriptor.
 
 In this case, the client starts a background run of an agent and provide a callback to be called upon completion.
 
@@ -126,14 +126,14 @@ In the sequence above:
 1. The server return the final result of the run.
 
 ### Run Interrupt and Resume
-Agent can support interrupts, i.e. the run execution can interrupt to request additional input to the client. The support for interrupts is signaled in the agent manifest.
+Agent can support interrupts, i.e. the run execution can interrupt to request additional input to the client. The support for interrupts is signaled in the agent ACP descriptor.
 
 When an interrupt occurs, the server provides the client with an interrupt payload, which specifies the interrupt type that have occurred and all the information associated with that interrupt, i.e. a request for additional input.
 
 The client can collect the needed input for the specific interrupt and resume the run by providing the resume payload, i.e. the additional input requested by the interrupt.
 
 >
-> Note that the type of interrupts and the correspondent interrupt and resume payload are not specified by ACP, because they are agent dependent. They are instead specified in the agent manifest.
+> Note that the type of interrupts and the correspondent interrupt and resume payload are not specified by ACP, because they are agent dependent. They are instead specified in the agent ACP descriptor.
 >
 
 The interrupt is provided by the server when the client requests the output.
@@ -166,7 +166,7 @@ In the sequence above:
 1. The server returns the final result.
 
 ### Thread Runs
-Agents can support thread run. Support for thread run is signaled in the agent manifest.
+Agents can support thread run. Support for thread run is signaled in the agent ACP descriptor.
 
 When an agent supports thread run, each run is associated to a thread, and at the end of the run a thread state is kept in the server.
 
@@ -175,7 +175,7 @@ Subsequent runs on the same thread use the previously created state, together wi
 The server offers ways to retrieve the current thread state and the history of the runs on a thread and the evolution of the thread states over execution of runs.
 
 >
-> Note that the format of the thread state is not specified by ACP, but it is (optionally) defined in the agent manifest. If specified, it can be retrieved by the client, if not it's not accessible to the client.
+> Note that the format of the thread state is not specified by ACP, but it is (optionally) defined in the agent ACP descriptor. If specified, it can be retrieved by the client, if not it's not accessible to the client.
 >
 
 #### Start of multiple runs over the same thread
@@ -225,7 +225,7 @@ In a nutshell, the client keeps the HTTP connection open and receives a stream o
 
 ACP supports 2 streaming modes:
 1. **result** where each event contains a full instance of the RunResult, which fully replace the previous update.
-2. **custom** where the schema of the event is left unspecified by ACP, which it can be specified in the specific agent manifest under `spec.custom_streaming_update`
+2. **custom** where the schema of the event is left unspecified by ACP, which it can be specified in the specific agent ACP descriptor under `spec.custom_streaming_update`
 
 #### Start a Run and stream output until completion
 
@@ -259,25 +259,23 @@ In the sequence above:
 1. The server returns an event with updated message "Hello, how can I help you today"
 1. The server closes the conenction because the output is complete
 
-## Agent Manifest
+## Agent ACP descriptor
 
-Agent Manifest is a descriptor that contains all the needed information to know how:
+Agent ACP Descriptor is a descriptor that contains all the needed information to know how:
 * Identify an agent
 * Know its capabilities
 * Consume its capabilities
-* Deploy the agent
 
-The Agent Manifest can be obtained from the Agent Directory or can be obtained through an [ACP call](#retrieve-agent-manifest-from-its-identifier).
-Note that when the manifest is retrieved through ACP, the information about the deployment modes is superfluous, because it is already deployed.
+The Agent ACP Descriptor can be obtained from the Agent Directory or can be obtained through an [ACP call](#retrieve-agent-descriptor-from-its-identifier).
 
-### Agent manifest sections and examples
+### Agent descriptor sections and examples
 
-We present the details of a sample manifest through the various manifest sections.
+We present the details of a sample agent ACP descriptor through the various descriptor sections.
 
 <details>
-<summary>Full sample manifest</summary>
+<summary>Full sample Descriptor</summary>
 
-[filename](docs/sample_manifests/mailcomposer.json ':include :type=code')
+[filename](docs/sample_acp_descriptors/mailcomposer.json ':include :type=code')
 
 </details>
 
@@ -287,7 +285,7 @@ Agent Metadata section contains all the information about agent identification a
 It contains unique name which together with a version constitutes the unique identifier of the agent. The uniqueness must be guaranteed within the server it is part of and more generally in the Agent Directory domain it belongs to.
 
 <details>
-<summary>Sample manifest metadata section for the mailcomposer agent</summary>
+<summary>Sample descriptor metadata section for the mailcomposer agent</summary>
 
 ```json
 {
@@ -295,7 +293,7 @@ It contains unique name which together with a version constitutes the unique ide
     "ref": {
       "name": "org.agntcy.mailcomposer",
       "version": "0.0.1",
-      "url": "https://github.com/agntcy/acp-spec/blob/main/docs/sample_manifests/mailcomposer.json"
+      "url": "https://github.com/agntcy/acp-spec/blob/main/docs/sample_acp_descriptors/mailcomposer.json"
     },
     "description": "This agent is able to collect user intent through a chat interface and compose wonderful emails based on that."
   }
@@ -320,7 +318,7 @@ The schemas of all the objects that this agent supports for:
    * Interrupt and Resume Payloads
    * Thread State
 
-Note that these schemas are needed in the agent manifest, since they are agent specific and are not defined by ACP, i.e. ACP defines a generic JSON object for the data structures listed above.
+Note that these schemas are needed in the agent ACP descriptor, since they are agent specific and are not defined by ACP, i.e. ACP defines a generic JSON object for the data structures listed above.
 
 <details>
 <summary>Sample metadata specs section for the mailcomposer agent</summary>
@@ -451,73 +449,3 @@ It supports a thread state which holds the chat history.
 
 </details>
 
-#### Agent Dependencies
-
-Agent Dependencies section lists all the other agents this agent depends on. We refer to them as `sub-agents`.
-
-Sub-agents are represented as references to other manifests.
-This information is needed when the manifest is used for agent deployment to make sure that sub-agents are available or to deploy them if needed.
-
-<details>
-<summary> Sample manifest dependency section for the mailcomposer agent</summary>
-
-```json
-{
-  ...
-    "dependencies": [
-      {
-        "name": "org.agntcy.sample-agent-2",
-        "version": "0.0.1"
-      },
-      {
-        "name": "org.agntcy.sample-agent-3",
-        "version": "0.0.1"
-      }
-    ]
-  ...
-}
-```
-
-Mailcomposer agent in the example above depends on `sample-agent-2` and `sample-agent-3`.
-
-</details>
-
-#### Agent Deployments
-Agent Deployments section lists all the possible ways the agent can be consumed, which we call deployment modes.
-
-Agent Manifest currently supports three deployment modes:
-* Source Code Deployment: In this case the agent can be deployed starting from its code. For this deployment mode, the manifest provides:
-    * The location where the code is available
-    * The framework used for this agent
-    * The framework specific configuration needed to run the agent.
-* Remote Service Deployment: In this case, the agent does not come as a deployable artefact, but it's already deployed and available as a service. For this deployment mode, the manifest provides:
-    * The network endpoint where the agent is available through the ACP
-    * The authentication used by ACP for this agent
-* Docker Deployment: In this case the agent can be deployed starting from a docker image. It is assumed that once running the docker container expose the agent through ACP. For this deployment mode, the manifest provides:
-    * The agent container image
-    * The authentication used by ACP for this agent
-
-<details>
-<summary> Sample manifest dependency section for the mailcomposer agent</summary>
-
-```json
-{
-  ...
-    "deployments": [
-      {
-        "type": "source_code",
-        "name": "src",
-        "url": "git@github.com:agntcy/mailcomposer.git",
-        "framework_config": {
-          "framework_type": "langgraph",
-          "graph": "mailcomposer"
-        }
-      }
-    ]
-  ...
-}
-```
-
-Mailcomposer agent in the example above comes as code written for langraph and available on github.
-
-</details>
