@@ -1296,7 +1296,7 @@ components:
         - type
         - run_id
         - status
-        - result
+        - value
     RunOutputStream:
       type: object
       title: Run Output Stream Event
