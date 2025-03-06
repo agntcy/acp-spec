@@ -628,7 +628,7 @@ paths:
           schema:
             type: string
             format: uuid
-            title: Thread Id
+            title: Thread ID
             description: The ID of the thread.
           name: thread_id
           in: path
@@ -702,7 +702,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /runs/{run_id}/threadstate:
+  /threads/{thread_id}/runs/{run_id}/threadstate:
     get:
       tags:
         - Threads
@@ -714,6 +714,15 @@ paths:
         be used to reconstruct the evolution of the thread state in its history.
       operationId: get_run_threadstate
       parameters:
+        - description: The ID of the thread.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Thread ID
+            description: The ID of the thread.
+          name: thread_id
+          in: path
         - description: The ID of the run.
           required: true
           schema:
