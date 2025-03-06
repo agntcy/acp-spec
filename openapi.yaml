@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: Agent Connect Protocol
-  version: '0.2'
+  version: '0.1'
 tags:
   - name: Agents
     description: >-
@@ -31,10 +31,11 @@ tags:
       See `Run`  and `RunOutput` models below for more info.
   - name: Threads
     description: >-
-      If supported by the agent, Run can be grouped in Threads. When a Run is
-      created without specifying a Thread ID , a new thread is automatically
-      created and a Thread ID is returned together with the created Run. At the
-      end of the Run, the server keeps a thread state associated to the thread.
+      If supported by the involved agents, Run can be grouped in Threads. When a
+      Run is created without specifying a Thread ID , a new thread is
+      automatically created and a Thread ID is returned together with the
+      created Run. At the end of the Run, the server keeps a thread state
+      associated to the thread.
 
       When a Run is created specifying a Thread ID, the agent uses the previous
       state of the thread together with the provided input. 
@@ -42,7 +43,10 @@ tags:
       A run can be created on a thread **only** if there is no run in the
       `pending` status on the same thread. 
 
-      Current thread state is accessible through this API.
+      Current thread state is accessible through the API.
+
+      Note that runs over the same thread can be executed on different agents,
+      as long as the agents support the same thread state format.
 
       See `Thread` for more info.
 paths:
@@ -1461,23 +1465,19 @@ components:
       title: Thread
       description: Detail of an empty thread to be created.
       properties:
-        agent_id:
-          type: string
-          title: Agent ID
-          description: Identifier of the agent this thread is executed on
         metadata:
           type: object
           title: Metadata
           description: Free form metadata for this thread
-      required:
-        - agent_id
     ThreadSearchRequest:
       properties:
         agent_id:
           type: string
           format: uuid
           title: Agent Id
-          description: Matches all threads associated with the specified agent ID.
+          description: >-
+            Matches all threads that have at least one Run associated with the
+            specified agent ID.
         metadata:
           type: object
           title: Metadata Filter
@@ -1504,21 +1504,17 @@ components:
       type: object
       title: Thread
       description: >-
-        Represents a collection of consecutive runs on an agent. Thread is
-        associated with a state
+        Represents a collection of consecutive runs over a thread.  Thread is
+        associated with a state. Runs for a thread can potentially happen across
+        different agents, if the state format is compatible.
       properties:
         thread_id:
           type: string
           title: Thread ID
           description: unique identifier of a thread
-        agent_id:
-          type: string
-          title: Agent ID
-          description: Identifier of the agent this thread is executed on
         metadata:
           type: object
           title: Metadata
           description: Free form metadata for this thread
       required:
         - thread_id
-        - agent_id

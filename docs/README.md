@@ -174,6 +174,8 @@ Subsequent runs on the same thread use the previously created state, together wi
 
 The server offers ways to retrieve the current thread state, the history of the runs on a thread, and the evolution of the thread states over execution of runs.
 
+Runs over the same thread can be executed on different agents, as long as the agents support the same thread state format.
+
 >
 > Note that the format of the thread state is not specified by ACP, but it is (optionally) defined in the agent ACP descriptor. If specified, it can be retrieved by the client, if not it's not accessible to the client.
 >
