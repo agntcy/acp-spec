@@ -1,29 +1,25 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.1.1",
   "info": {
-    "title": "Agent Protocol",
-    "version": "0.1.6"
+    "title": "Agent Connect Protocol",
+    "version": "0.2.0"
   },
   "tags": [
     {
       "name": "Agents",
-      "description": "An agent is an LLM-powered actor that can be invoked on a thread."
+      "description": "Agents are AI workflows that can be configured and/or executed on this server.  This means that a client of this server can start a Run on any of the Agents supported by this server.\nEach agent may support different features of ACP, also each agent specifies the schemas of the objects carried by ACP for  configuration, input, output, interrupts and state. \nDetails of the ACP features and the schemas are kept in the ACP descriptor of the specific agent.  This object can be retrieved through this ACP interface or is found in the ACP extension of the agent record in the agent directory.\nSee `Agent` and `AgentACPDescriptor` models below for more info."
     },
     {
       "name": "Threads",
-      "description": "A thread contains the accumulated outputs of a group of runs. It is a container to maintain the state of an agent across multiple runs. It also acts as a registry for the runs.\n\nA thread keeps track of agent states at every step so that continuity of the context is preserved. Moreover, such a book-keeping enables us some granular controls like debugging, interrupting or replaying a run/invocation.\n\nA thread state is a data context defined by the developer and can be anything (e.g. a `typeddict`) and it gets passed through from one invocation to another so that business logic is instrumented by data.\n\nA thread keeps track of the whole state history. At every step, it also applies a checkpoint, which is primarily a `uuid`, so that it is easier to refer to a chunk of the history.\n\nOne can easily query the last state, a specific state (by checkpoint id), the whole state history, or, a part of the history (from a checkpoint).\n\nSee `Thread`, `ThreadState` and `Checkpoint` models below for more info."
+      "description": "If supported by the involved agents, Run can be grouped in Threads. \nWhen a run is executed on a thread is called Thread Run. At the end of a Thread Run, the server keeps a thread state associated to the thread.\nA thread keeps track of agent states at every step so that continuity of the context is preserved. Moreover, such a book-keeping enables us some granular controls like debugging, interrupting or replaying a run/invocation.\n\nA thread state is a data context defined by the developer and can be anything and it gets passed through from one invocation to another so that business logic is instrumented by data.\n\nA thread keeps track of the whole state history. At every step, it also applies a checkpoint, which is primarily a `uuid`, so that it is easier to refer to a chunk of the history.\n\nOne can easily query the last state, a specific state (by checkpoint id), the whole state history, or, a part of the history (from a checkpoint).\n\nSee `Thread`, `ThreadState` and `Checkpoint` models below for more info."
     },
     {
-      "name": "Runs",
-      "description": "A run is an invocation of an agent on a thread. It updates the state of the thread."
+      "name": "Thread Runs",
+      "description": "Thread Runs are runs created on a thread. \nA Thread Run can be created on a thread **only** if there is no run in the `pending` status on the same thread, i.e. if the thread is in the state `idle`\nNote that runs over the same thread can be executed on different agents, as long as the agents support the same thread state format.\nSee `Thread` and `RunCreateStateful` for more info."
     },
     {
       "name": "Stateless Runs",
-      "description": "A run is an invocation of an agent, with no state or memory persistence."
-    },
-    {
-      "name": "Store",
-      "description": "Store is an API for managing persistent key-value store (long-term memory) that is available from any thread."
+      "description": "A Run represents an execution of an agent.\nThe output of a Run can be a final result or an interrupt.\nResult from a run can be retrieved by polling or by blocking and waiting for the result.\nSee `Run`  and `RunOutput` models below for more info."
     }
   ],
   "paths": {
@@ -32,43 +28,18 @@
         "tags": [
           "Agents"
         ],
-        "summary": "List Agents",
-        "description": "List Agents available in this service.",
-        "operationId": "search_agents_post_agents_search",
+        "summary": "Search Agents",
+        "description": "Returns a list of agents matching the criteria provided in the request.\n\nThis endpoint also functions as the endpoint to list all agents.",
+        "operationId": "search_agents",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Name of the agent to search."
-                  },
-                  "metadata": {
-                    "type": "object",
-                    "description": "Metadata of the agent to search."
-                  },
-                  "limit": {
-                    "type": "integer",
-                    "title": "Limit",
-                    "description": "Maximum number to return.",
-                    "default": 10,
-                    "minimum": 1,
-                    "maximum": 1000
-                  },
-                  "offset": {
-                    "type": "integer",
-                    "title": "Offset",
-                    "description": "Offset to start from.",
-                    "default": 0,
-                    "minimum": 0
-                  }
-                }
+                "$ref": "#/components/schemas/AgentSearchRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -80,17 +51,7 @@
                     "$ref": "#/components/schemas/Agent"
                   },
                   "type": "array",
-                  "title": "Response List Agents"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "title": "Matching Agent List"
                 }
               }
             }
@@ -115,14 +76,15 @@
         ],
         "summary": "Get Agent",
         "description": "Get an agent by ID.",
-        "operationId": "get_agent_agents__agent_id__get",
+        "operationId": "get_agent_by_id",
         "parameters": [
           {
             "description": "The ID of the agent.",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Agent ID",
+              "format": "uuid",
+              "title": "Agent Id",
               "description": "The ID of the agent."
             },
             "name": "agent_id",
@@ -153,20 +115,21 @@
         }
       }
     },
-    "/agents/{agent_id}/schemas": {
+    "/agents/{agent_id}/descriptor": {
       "get": {
         "tags": [
           "Agents"
         ],
-        "summary": "Get Agent Schemas",
-        "description": "Get an agent's schemas by ID.",
-        "operationId": "get_agent_schemas_agents__agent_id__schemas_get",
+        "summary": "Get Agent ACP Descriptor from its id",
+        "description": "Get agent ACP descriptor by agent ID.",
+        "operationId": "get_acp_descriptor_by_id",
         "parameters": [
           {
             "description": "The ID of the agent.",
             "required": true,
             "schema": {
               "type": "string",
+              "format": "uuid",
               "title": "Agent Id",
               "description": "The ID of the agent."
             },
@@ -180,7 +143,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AgentSchemas"
+                  "$ref": "#/components/schemas/AgentACPDescriptor"
                 }
               }
             }
@@ -213,9 +176,9 @@
         "tags": [
           "Threads"
         ],
-        "summary": "Create Thread",
-        "description": "Create a thread.",
-        "operationId": "create_thread_threads_post",
+        "summary": "Create an empty Thread",
+        "description": "Create a new thread. ",
+        "operationId": "create_thread",
         "requestBody": {
           "content": {
             "application/json": {
@@ -267,7 +230,7 @@
         ],
         "summary": "Search Threads",
         "description": "Search for threads.\n\nThis endpoint also functions as the endpoint to list all threads.",
-        "operationId": "search_threads_threads_search_post",
+        "operationId": "search_threads",
         "requestBody": {
           "content": {
             "application/json": {
@@ -288,7 +251,7 @@
                     "$ref": "#/components/schemas/Thread"
                   },
                   "type": "array",
-                  "title": "Response Search Threads Threads Search Post"
+                  "title": "Response Search Agents Agents Search Post"
                 }
               }
             }
@@ -313,7 +276,7 @@
         ],
         "summary": "Get Thread History",
         "description": "Get all past states for a thread.",
-        "operationId": "get_thread_history_threads__thread_id__history_get",
+        "operationId": "get_thread_history",
         "parameters": [
           {
             "description": "The ID of the thread.",
@@ -391,7 +354,7 @@
         ],
         "summary": "Copy Thread",
         "description": "Create a new thread with a copy of the state and checkpoints from an existing thread.",
-        "operationId": "copy_thread_post_threads__thread_id__copy_post",
+        "operationId": "copy_thread",
         "parameters": [
           {
             "description": "The ID of the thread.",
@@ -441,27 +404,27 @@
       }
     },
     "/threads/{thread_id}": {
+      "parameters": [
+        {
+          "description": "The ID of the thread.",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Thread ID",
+            "description": "The ID of the thread."
+          },
+          "name": "thread_id",
+          "in": "path"
+        }
+      ],
       "get": {
         "tags": [
           "Threads"
         ],
         "summary": "Get Thread",
-        "description": "Get a thread by ID.",
-        "operationId": "get_thread_threads__thread_id__get",
-        "parameters": [
-          {
-            "description": "The ID of the thread.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Thread Id",
-              "description": "The ID of the thread."
-            },
-            "name": "thread_id",
-            "in": "path"
-          }
-        ],
+        "description": "Get a thread from its ID. ",
+        "operationId": "get_thread",
         "responses": {
           "200": {
             "description": "Success",
@@ -499,23 +462,9 @@
         "tags": [
           "Threads"
         ],
-        "summary": "Delete Thread",
-        "description": "Delete a thread by ID.",
-        "operationId": "delete_thread_threads__thread_id__delete",
-        "parameters": [
-          {
-            "description": "The ID of the thread.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Thread Id",
-              "description": "The ID of the thread."
-            },
-            "name": "thread_id",
-            "in": "path"
-          }
-        ],
+        "summary": "Delete a thread. If the thread contains any pending run, deletion fails.",
+        "description": "Delete a thread.",
+        "operationId": "delete_thread",
         "responses": {
           "204": {
             "description": "Success"
@@ -548,21 +497,7 @@
         ],
         "summary": "Patch Thread",
         "description": "Update a thread.",
-        "operationId": "patch_thread_threads__thread_id__patch",
-        "parameters": [
-          {
-            "description": "The ID of the thread.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Thread Id",
-              "description": "The ID of the thread."
-            },
-            "name": "thread_id",
-            "in": "path"
-          }
-        ],
+        "operationId": "patch_thread",
         "requestBody": {
           "content": {
             "application/json": {
@@ -608,26 +543,28 @@
       }
     },
     "/threads/{thread_id}/runs": {
+      "parameters": [
+        {
+          "description": "The ID of the thread.",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Thread ID",
+            "description": "The ID of the thread."
+          },
+          "name": "thread_id",
+          "in": "path"
+        }
+      ],
       "get": {
         "tags": [
-          "Runs"
+          "Thread Runs"
         ],
-        "summary": "List Runs",
+        "summary": "List Runs for a thread",
         "description": "List runs for a thread.",
-        "operationId": "list_runs_http_threads__thread_id__runs_get",
+        "operationId": "list_thread_runs",
         "parameters": [
-          {
-            "description": "The ID of the thread.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Thread Id",
-              "description": "The ID of the thread."
-            },
-            "name": "thread_id",
-            "in": "path"
-          },
           {
             "required": false,
             "schema": {
@@ -687,25 +624,11 @@
       },
       "post": {
         "tags": [
-          "Runs"
+          "Thread Runs"
         ],
-        "summary": "Create Background Run",
-        "description": "Create a run in existing thread, return the run ID immediately. Don't wait for the final run output.",
-        "operationId": "create_run_threads__thread_id__runs_post",
-        "parameters": [
-          {
-            "description": "The ID of the thread.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Thread Id",
-              "description": "The ID of the thread."
-            },
-            "name": "thread_id",
-            "in": "path"
-          }
-        ],
+        "summary": "Create a Background Run on a thread",
+        "description": "Create a run on a thread, return the run ID immediately. Don't wait for the final run output.",
+        "operationId": "create_thread_run",
         "requestBody": {
           "content": {
             "application/json": {
@@ -715,6 +638,29 @@
             }
           },
           "required": true
+        },
+        "callbacks": {
+          "runstatuschange": {
+            "{$request.body#/webhook}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Run"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          }
         },
         "responses": {
           "200": {
@@ -763,11 +709,11 @@
     "/threads/{thread_id}/runs/stream": {
       "post": {
         "tags": [
-          "Runs"
+          "Thread Runs"
         ],
-        "summary": "Create Run, Stream Output",
-        "description": "Create a run in existing thread. Stream the output.",
-        "operationId": "stream_run_threads__thread_id__runs_stream_post",
+        "summary": "Create a run on a thread and stream its output",
+        "description": "Create a run on a thread and join its output stream. See 'GET /runs/{run_id}/stream' for details on the return values.",
+        "operationId": "create_and_stream_thread_run_output",
         "parameters": [
           {
             "description": "The ID of the thread.",
@@ -794,10 +740,12 @@
         },
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Stream of agent results either as `ValueRunResultUpdate` objects or `CustomRunResultUpdate` objects, according to the specific streaming mode requested. Note that the stream of events is carried using the format specified in SSE spec `text/event-stream`",
             "content": {
-              "application/json": {
-                "schema": {}
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOutputStream"
+                }
               }
             }
           },
@@ -837,11 +785,11 @@
     "/threads/{thread_id}/runs/wait": {
       "post": {
         "tags": [
-          "Runs"
+          "Thread Runs"
         ],
-        "summary": "Create Run, Wait for Output",
-        "description": "Create a run in existing thread. Wait for the final output and then return it.",
-        "operationId": "wait_run_threads__thread_id__runs_wait_post",
+        "summary": "Create a run on a thread and wait for its output output",
+        "description": "Create a run on a thread and wait for its output. See 'GET /runs/{run_id}/wait' for details on the return values.",
+        "operationId": "create_and_wait_for_thread_run_output",
         "parameters": [
           {
             "description": "The ID of the thread.",
@@ -910,141 +858,14 @@
         }
       }
     },
-    "/threads/{thread_id}/runs/{run_id}": {
-      "get": {
-        "tags": [
-          "Runs"
-        ],
-        "summary": "Get Run",
-        "description": "Get a run by ID.",
-        "operationId": "get_run_http_threads__thread_id__runs__run_id__get",
-        "parameters": [
-          {
-            "description": "The ID of the thread.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Thread Id",
-              "description": "The ID of the thread."
-            },
-            "name": "thread_id",
-            "in": "path"
-          },
-          {
-            "description": "The ID of the run.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Run Id",
-              "description": "The ID of the run."
-            },
-            "name": "run_id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Run"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Runs"
-        ],
-        "summary": "Delete Run",
-        "description": "Delete a run by ID.",
-        "operationId": "delete_run_threads__thread_id__runs__run_id__delete",
-        "parameters": [
-          {
-            "description": "The ID of the thread.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Thread Id",
-              "description": "The ID of the thread."
-            },
-            "name": "thread_id",
-            "in": "path"
-          },
-          {
-            "description": "The ID of the run.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Run Id",
-              "description": "The ID of the run."
-            },
-            "name": "run_id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Success"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/threads/{thread_id}/runs/{run_id}/wait": {
       "get": {
         "tags": [
-          "Runs"
+          "Thread Runs"
         ],
-        "summary": "Wait for Run output",
-        "description": "Wait for a run to finish, return the final output. If the run already finished, returns its final output immediately.",
-        "operationId": "join_run_http_threads__thread_id__runs__run_id__join_get",
+        "summary": "Retrieve last output of a run if available",
+        "description": "Retrieve the output of the run if available. See 'GET /runs/{run_id}/wait' for details on the return values.",
+        "operationId": "wait_for_thread_run_output",
         "parameters": [
           {
             "description": "The ID of the thread.",
@@ -1105,14 +926,115 @@
         }
       }
     },
+    "/threads/{thread_id}/runs/{run_id}": {
+      "parameters": [
+        {
+          "description": "The ID of the thread.",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Thread Id",
+            "description": "The ID of the thread."
+          },
+          "name": "thread_id",
+          "in": "path"
+        },
+        {
+          "description": "The ID of the run.",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "The ID of the run."
+          },
+          "name": "run_id",
+          "in": "path"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Thread Runs"
+        ],
+        "summary": "Get Run",
+        "description": "Get a run by ID.",
+        "operationId": "get_thread_run",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Thread Runs"
+        ],
+        "summary": "Delete Run",
+        "description": "Delete a run by ID.",
+        "operationId": "delete_thread_run",
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/threads/{thread_id}/runs/{run_id}/stream": {
       "get": {
         "tags": [
-          "Runs"
+          "Thread Runs"
         ],
         "summary": "Stream output from Run",
-        "description": "Join the output stream of an existing run. This endpoint streams output in real-time from a run similar to the /threads/__THREAD_ID__/runs/stream endpoint. Only output produced after this endpoint is called will be streamed.",
-        "operationId": "stream_run_http_threads__thread_id__runs__run_id__join_get",
+        "description": "Join the output stream of an existing run. See 'GET /runs/{run_id}/stream' for details on the return values.",
+        "operationId": "stream_thread_run_output",
         "parameters": [
           {
             "description": "The ID of the thread.",
@@ -1141,10 +1063,12 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Stream of agent results either as `ValueRunResultUpdate` objects or `CustomRunResultUpdate` objects, according to the specific streaming mode requested. Note that the stream of events is carried using the format specified in SSE spec `text/event-stream`",
             "content": {
-              "application/json": {
-                "schema": {}
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOutputStream"
+                }
               }
             }
           },
@@ -1174,10 +1098,10 @@
     "/threads/{thread_id}/runs/{run_id}/cancel": {
       "post": {
         "tags": [
-          "Runs"
+          "Thread Runs"
         ],
         "summary": "Cancel Run",
-        "operationId": "cancel_run_http_threads__thread_id__runs__run_id__cancel_post",
+        "operationId": "cancel_thread_run",
         "parameters": [
           {
             "description": "The ID of the thread.",
@@ -1261,9 +1185,9 @@
         "tags": [
           "Stateless Runs"
         ],
-        "summary": "Create Background Run",
-        "description": "Create a run in a new thread, return the run ID immediately. Don't wait for the final run output.",
-        "operationId": "run_stateless_runs_post",
+        "summary": "Create a Background stateless Run",
+        "description": "Create a stateless run, return the run ID immediately. Don't wait for the final run output.",
+        "operationId": "create_stateless_run",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1274,12 +1198,37 @@
           },
           "required": true
         },
+        "callbacks": {
+          "runstatuschange": {
+            "{$request.body#/webhook}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Run"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
               }
             }
           },
@@ -1316,14 +1265,60 @@
         }
       }
     },
+    "/runs/search": {
+      "post": {
+        "tags": [
+          "Stateless Runs"
+        ],
+        "summary": "Search Stateless Runs",
+        "description": "Search for stateless run.\n\nThis endpoint also functions as the endpoint to list all stateless Runs.",
+        "operationId": "search_stateless_runs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Run"
+                  },
+                  "type": "array",
+                  "title": "Run Search Response"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/runs/stream": {
       "post": {
         "tags": [
           "Stateless Runs"
         ],
-        "summary": "Create Run, Stream Output",
-        "description": "Create a run in a new thread, stream the output.",
-        "operationId": "stream_run_stateless_runs_stream_post",
+        "summary": "Create a stateless run and stream its output",
+        "description": "Create a stateless run and join its output stream. See 'GET /runs/{run_id}/stream' for details on the return values.",
+        "operationId": "create_and_stream_stateless_run_output",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1336,28 +1331,17 @@
         },
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Stream of agent results either as `ValueRunResultUpdate` objects or `CustomRunResultUpdate` objects, according to the specific streaming mode requested. Note that the stream of events is carried using the format specified in SSE spec `text/event-stream`",
             "content": {
               "text/event-stream": {
                 "schema": {
-                  "type": "string",
-                  "description": "The server will send a stream of events in SSE format.\n\n**Example event**:\n\nid: 1\n\nevent: message\n\ndata: {}"
+                  "$ref": "#/components/schemas/RunOutputStream"
                 }
               }
             }
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -1384,9 +1368,9 @@
         "tags": [
           "Stateless Runs"
         ],
-        "summary": "Create Run, Wait for Output",
-        "description": "Create a run in a new thread. Wait for the final output and then return it.",
-        "operationId": "wait_run_stateless_runs_wait_post",
+        "summary": "Create a stateless run and wait for its output",
+        "description": "Create a stateless run and wait for its output. See 'GET /runs/{run_id}/wait' for details on the return values.",
+        "operationId": "create_and_wait_for_stateless_run_output",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1441,26 +1425,104 @@
         }
       }
     },
-    "/store/items": {
-      "put": {
+    "/runs/{run_id}/wait": {
+      "get": {
         "tags": [
-          "Store"
+          "Stateless Runs"
         ],
-        "summary": "Store or update an item.",
-        "operationId": "put_item",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StorePutRequest"
+        "summary": "Retrieve last output of a run if available",
+        "description": "Retrieve the last output of the run.  The output can be:\n  * an interrupt, this happens when the agent run status is `interrupted`\n  * the final result of the run, this happens when the agent run status is `success`\n  * an error, this happens when the agent run status is `error` or `timeout`\n\n\nThis call blocks until the output is available.",
+        "operationId": "wait_for_stateless_run_output",
+        "parameters": [
+          {
+            "description": "The ID of the run.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id",
+              "description": "The ID of the run."
+            },
+            "name": "run_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunWaitResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
-        },
+        }
+      }
+    },
+    "/runs/{run_id}": {
+      "parameters": [
+        {
+          "description": "The ID of the run.",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "The ID of the run."
+          },
+          "name": "run_id",
+          "in": "path"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Stateless Runs"
+        ],
+        "summary": "Get Run",
+        "description": "Get a stateless run by ID.",
+        "operationId": "get_stateless_run",
         "responses": {
-          "204": {
-            "description": "Success"
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1476,20 +1538,11 @@
       },
       "delete": {
         "tags": [
-          "Store"
+          "Stateless Runs"
         ],
-        "summary": "Delete an item.",
-        "operationId": "delete_item",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StoreDeleteRequest"
-              }
-            }
-          }
-        },
+        "summary": "Delete Stateless Run",
+        "description": "Delete a stateless run by ID.",
+        "operationId": "delete_stateless_run",
         "responses": {
           "204": {
             "description": "Success"
@@ -1515,51 +1568,37 @@
             }
           }
         }
-      },
+      }
+    },
+    "/runs/{run_id}/stream": {
       "get": {
         "tags": [
-          "Store"
+          "Stateless Runs"
         ],
-        "summary": "Retrieve a single item.",
-        "operationId": "get_item",
+        "summary": "Stream output from Stateless Run",
+        "description": "Join the output stream of an existing run. This endpoint streams output in real-time from a run. Only output produced after this endpoint is called will be streamed.",
+        "operationId": "stream_stateless_run_output",
         "parameters": [
           {
-            "name": "key",
-            "in": "query",
+            "description": "The ID of the run.",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id",
+              "description": "The ID of the run."
+            },
+            "name": "run_id",
+            "in": "path"
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Stream of agent results either as `ValueRunResultUpdate` objects or `CustomRunResultUpdate` objects, according to the specific streaming mode requested. Note that the stream of events is carried using the format specified in SSE spec `text/event-stream`",
             "content": {
-              "application/json": {
+              "text/event-stream": {
                 "schema": {
-                  "$ref": "#/components/schemas/Item"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/RunOutputStream"
                 }
               }
             }
@@ -1587,71 +1626,62 @@
         }
       }
     },
-    "/store/items/search": {
+    "/runs/{run_id}/cancel": {
       "post": {
         "tags": [
-          "Store"
+          "Stateless Runs"
         ],
-        "summary": "Search for items within a namespace prefix.",
-        "operationId": "search_items",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StoreSearchRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchItemsResponse"
-                }
-              }
-            }
+        "summary": "Cancel Stateless Run",
+        "operationId": "cancel_stateless_run",
+        "parameters": [
+          {
+            "description": "The ID of the run.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id",
+              "description": "The ID of the run."
+            },
+            "name": "run_id",
+            "in": "path"
           },
-          "422": {
-            "description": "Validation Error",
+          {
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "title": "Wait",
+              "default": false
+            },
+            "name": "wait",
+            "in": "query"
+          },
+          {
+            "description": "Action to take when cancelling the run. Possible values are `interrupt` or `rollback`. `interrupt` will simply cancel the run. `rollback` will cancel the run and delete the run and associated checkpoints afterwards.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "interrupt",
+                "rollback"
+              ],
+              "title": "Action",
+              "default": "interrupt"
+            },
+            "name": "action",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/store/namespaces": {
-      "post": {
-        "tags": [
-          "Store"
-        ],
-        "summary": "List namespaces with optional match conditions.",
-        "operationId": "list_namespaces",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StoreListNamespacesRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListNamespaceResponse"
                 }
               }
             }
@@ -1673,482 +1703,342 @@
   "components": {
     "schemas": {
       "Agent": {
+        "title": "Agent",
+        "description": "A description of an agent supported by this server",
+        "type": "object",
         "properties": {
           "agent_id": {
             "type": "string",
+            "format": "uuid",
             "title": "Agent Id",
-            "description": "The ID of the agent."
+            "description": "Unique identifier of the agent in this server."
           },
-          "name": {
-            "type": "string",
-            "title": "Agent Name",
-            "description": "The name of the agent"
+          "metadata": {
+            "$ref": "#/components/schemas/AgentMetadata"
+          }
+        },
+        "required": [
+          "agent_id",
+          "metadata"
+        ]
+      },
+      "AgentMetadata": {
+        "title": "Agent Metadata",
+        "description": "Basic information associated to the agent",
+        "type": "object",
+        "properties": {
+          "ref": {
+            "$ref": "#/components/schemas/AgentRef"
           },
           "description": {
-            "type": "string",
+            "description": "Description of this agent, which should include what the intended use is, what tasks it accomplishes and how uses input and configs to produce the output and any other side effect",
             "title": "Description",
-            "description": "The description of the agent."
-          },
-          "metadata": {
-            "type": "object",
-            "title": "Metadata",
-            "description": "The agent metadata."
+            "type": "string"
           }
         },
-        "type": "object",
         "required": [
-          "agent_id",
-          "name"
-        ],
-        "title": "Agent"
+          "ref",
+          "description"
+        ]
       },
-      "AgentSchemas": {
+      "AgentRef": {
+        "title": "Agent Reference",
+        "description": "Reference to an Agent Record in the Agent Directory, it includes name, version and a locator.",
+        "type": "object",
         "properties": {
-          "agent_id": {
+          "name": {
+            "description": "Name of the agent that identifies the agent in its record",
+            "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "description": "Version of the agent in its record. Should be formatted according to semantic versioning (https://semver.org)",
+            "title": "Version",
+            "type": "string"
+          },
+          "url": {
+            "title": "Agent Record URL",
+            "description": "URL of the record. Can be a network location or a file.",
             "type": "string",
-            "title": "Agent Id",
-            "description": "The ID of the agent."
-          },
-          "input_schema": {
-            "type": "object",
-            "title": "Input Schema",
-            "description": "The schema for the agent input. In JSON Schema format."
-          },
-          "output_schema": {
-            "type": "object",
-            "title": "Output Schema",
-            "description": "The schema for the agent output. In JSON Schema format."
-          },
-          "state_schema": {
-            "type": "object",
-            "title": "State Schema",
-            "description": "The schema for the agent's internal state. In JSON Schema format."
-          },
-          "config_schema": {
-            "type": "object",
-            "title": "Config Schema",
-            "description": "The schema for the agent config. In JSON Schema format."
+            "format": "uri"
           }
         },
-        "type": "object",
         "required": [
-          "agent_id",
-          "input_schema",
-          "output_schema"
-        ],
-        "title": "AgentSchemas",
-        "description": "Defines the structure and properties of an agent."
+          "name",
+          "version"
+        ]
       },
-      "Run": {
+      "AgentACPDescriptor": {
+        "title": "Agent ACP Descriptor",
+        "description": "Describe all the ACP specs of an agent, including schemas and protocol features.",
+        "type": "object",
         "properties": {
-          "run_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Run Id",
-            "description": "The ID of the run."
-          },
-          "thread_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Thread Id",
-            "description": "The ID of the thread."
-          },
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id",
-            "description": "The agent that was used for this run."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The time the run was created."
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At",
-            "description": "The last time the run was updated."
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "error",
-              "success",
-              "timeout",
-              "interrupted"
-            ],
-            "title": "Status",
-            "description": "The status of the run. One of 'pending', 'error', 'success', 'timeout', 'interrupted'."
-          },
           "metadata": {
-            "type": "object",
-            "title": "Metadata",
-            "description": "The run metadata."
+            "$ref": "#/components/schemas/AgentMetadata"
           },
-          "kwargs": {
-            "type": "object",
-            "title": "Kwargs"
-          },
-          "multitask_strategy": {
-            "type": "string",
-            "enum": [
-              "reject",
-              "rollback",
-              "interrupt",
-              "enqueue"
-            ],
-            "title": "Multitask Strategy",
-            "description": "Strategy to handle concurrent runs on the same thread."
+          "specs": {
+            "$ref": "#/components/schemas/AgentACPSpec"
           }
         },
-        "type": "object",
         "required": [
-          "run_id",
-          "thread_id",
-          "created_at",
-          "updated_at",
-          "status",
           "metadata",
-          "kwargs",
-          "multitask_strategy"
-        ],
-        "title": "Run"
+          "specs"
+        ]
       },
-      "RunCreateStateful": {
+      "AgentACPSpec": {
+        "title": "Agent ACP Specs",
+        "description": "Specification of agent capabilities, config, input, output, and interrupts",
+        "type": "object",
         "properties": {
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id",
-            "description": "The agent ID to run. If not provided will use the default agent for this service."
+          "capabilities": {
+            "type": "object",
+            "title": "Agent Capabilities",
+            "description": "Declares what invocation features this agent is capable of.",
+            "properties": {
+              "threads": {
+                "type": "boolean",
+                "title": "Thread Support",
+                "default": false,
+                "description": "This is `true` if the agent supports run threads. If this is `false`, then the threads tagged with `Threads` are not available. If missing, it means `false`"
+              },
+              "interrupts": {
+                "type": "boolean",
+                "title": "Interrupt Support",
+                "default": false,
+                "description": "This is `true` if the agent runs can interrupt to request additional input and can be subsequently resumed. If missing, it means `false`"
+              },
+              "callbacks": {
+                "type": "boolean",
+                "title": "Callback Support",
+                "default": false,
+                "description": "This is `true` if the agent supports a webhook to report run results. If this is `false`, providing a `webhook` at run creation has no effect. If missing, it means `false`"
+              },
+              "streaming": {
+                "type": "object",
+                "title": "Streaming Modes",
+                "description": "Supported streaming modes. If missing, streaming is not supported.  If no mode is supported attempts to stream output will result in an error.",
+                "properties": {
+                  "values": {
+                    "type": "boolean",
+                    "title": "Values Streaming",
+                    "description": "This is `true` if the agent supports values streaming. If `false` or missing, values streaming is not supported. Values streaming consists of a stream of objects of type `ValueRunResultUpdate`, where each one sent over the stream fully replace the previous one."
+                  },
+                  "custom": {
+                    "type": "boolean",
+                    "title": "Custom Objects Streaming",
+                    "description": "This is `true` if the agent supports custom objects streaming. If `false` or missing, custom streaming is not supported. Custom Objects streaming consists of a stream of object whose schema is specified by the agent ACP descriptor under `specs.custom_streaming_update`."
+                  }
+                }
+              }
+            }
           },
           "input": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "array"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Input",
-            "description": "The input to the graph."
-          },
-          "metadata": {
             "type": "object",
-            "title": "Metadata",
-            "description": "Metadata to assign to the run."
-          },
-          "config": {
-            "properties": {
-              "tags": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array",
-                "title": "Tags"
-              },
-              "recursion_limit": {
-                "type": "integer",
-                "title": "Recursion Limit"
-              },
-              "configurable": {
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object",
+            "examples": [
+              {
                 "type": "object",
-                "title": "Configurable"
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "age": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                  }
+                }
               }
-            },
-            "type": "object",
-            "title": "Config",
-            "description": "The configuration for the agent."
-          },
-          "webhook": {
-            "type": "string",
-            "maxLength": 65536,
-            "minLength": 1,
-            "format": "uri",
-            "title": "Webhook",
-            "description": "Webhook to call after run finishes."
-          },
-          "stream_mode": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "values",
-                    "messages-tuple",
-                    "updates",
-                    "debug",
-                    "custom"
-                  ]
-                },
-                "type": "array"
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "values",
-                  "messages-tuple",
-                  "updates",
-                  "debug",
-                  "custom"
-                ]
-              }
-            ],
-            "title": "Stream Mode",
-            "description": "The stream mode(s) to use.",
-            "default": [
-              "values"
             ]
           },
-          "stream_subgraphs": {
-            "type": "boolean",
-            "title": "Stream Subgraphs",
-            "description": "Whether to stream output from subgraphs.",
-            "default": false
-          },
-          "on_disconnect": {
-            "type": "string",
-            "enum": [
-              "cancel",
-              "continue"
-            ],
-            "title": "On Disconnect",
-            "description": "The disconnect mode to use. Must be one of 'cancel' or 'continue'.",
-            "default": "cancel"
-          },
-          "multitask_strategy": {
-            "type": "string",
-            "enum": [
-              "reject",
-              "rollback",
-              "interrupt",
-              "enqueue"
-            ],
-            "title": "Multitask Strategy",
-            "description": "Multitask strategy to use. Must be one of 'reject', 'interrupt', 'rollback', or 'enqueue'.",
-            "default": "reject"
-          },
-          "if_not_exists": {
-            "type": "string",
-            "enum": [
-              "create",
-              "reject"
-            ],
-            "title": "If Not Exists",
-            "description": "How to handle missing thread. Must be either 'reject' (raise error if missing), or 'create' (create new thread).",
-            "default": "reject"
-          },
-          "after_seconds": {
-            "type": "integer",
-            "title": "After Seconds",
-            "description": "The number of seconds to wait before starting the run. Use to schedule future runs."
-          }
-        },
-        "type": "object",
-        "required": [],
-        "title": "RunCreateStateful",
-        "description": "Payload for creating a run."
-      },
-      "RunWaitResponse": {
-        "type": "object",
-        "properties": {
-          "run": {
-            "$ref": "#/components/schemas/Run",
-            "title": "Run",
-            "description": "The run information."
-          },
-          "values": {
+          "output": {
             "type": "object",
-            "title": "Values",
-            "description": "The values returned by the run."
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object",
+            "examples": [
+              {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": null,
+                "name": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            ]
           },
-          "messages": {
+          "custom_streaming_update": {
+            "type": "object",
+            "description": "This describes the format of an Update in the streaming.  Must be specified if `streaming.custom` capability is true and cannot be specified otherwise. Format follows: https://spec.openapis.org/oas/v3.1.1.html#schema-object",
+            "examples": [
+              {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": null,
+                "name": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            ]
+          },
+          "thread_state": {
+            "type": "object",
+            "description": "This describes the format of ThreadState.  Cannot be specified if `threads` capability is false. If not specified, when `threads` capability is true, then the API to retrieve ThreadState from a Thread or a Run is not available. This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object",
+            "examples": [
+              {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": null,
+                "name": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            ]
+          },
+          "config": {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object",
+            "examples": [
+              {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": null,
+                "name": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            ]
+          },
+          "interrupts": {
             "type": "array",
+            "description": "List of possible interrupts that can be provided by the agent. If `interrupts` capability is true, this needs to have at least one item.",
             "items": {
-              "$ref": "#/components/schemas/Message"
-            },
-            "title": "Messages",
-            "description": "The messages returned by the run."
-          }
-        }
-      },
-      "RunCreateStateless": {
-        "properties": {
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id",
-            "description": "The agent ID to run. If not provided will use the default agent for this service."
-          },
-          "input": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "array"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Input",
-            "description": "The input to the graph."
-          },
-          "metadata": {
-            "type": "object",
-            "title": "Metadata",
-            "description": "Metadata to assign to the run."
-          },
-          "config": {
-            "properties": {
-              "tags": {
-                "items": {
+              "type": "object",
+              "properties": {
+                "interrupt_type": {
+                  "description": "Name of this interrupt type. Needs to be unique in the list of interrupts.",
+                  "title": "Interrupt Type Name",
                   "type": "string"
                 },
-                "type": "array",
-                "title": "Tags"
-              },
-              "recursion_limit": {
-                "type": "integer",
-                "title": "Recursion Limit"
-              },
-              "configurable": {
-                "type": "object",
-                "title": "Configurable"
-              }
-            },
-            "type": "object",
-            "title": "Config",
-            "description": "The configuration for the agent."
-          },
-          "webhook": {
-            "type": "string",
-            "maxLength": 65536,
-            "minLength": 1,
-            "format": "uri",
-            "title": "Webhook",
-            "description": "Webhook to call after run finishes."
-          },
-          "stream_mode": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "values",
-                    "messages-tuple",
-                    "updates",
-                    "debug",
-                    "custom"
+                "interrupt_payload": {
+                  "type": "object",
+                  "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object",
+                  "examples": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "name"
+                      ],
+                      "properties": null,
+                      "name": {
+                        "type": "string"
+                      },
+                      "address": {
+                        "type": "string"
+                      },
+                      "age": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                      }
+                    }
                   ]
                 },
-                "type": "array"
+                "resume_payload": {
+                  "type": "object",
+                  "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object",
+                  "examples": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "name"
+                      ],
+                      "properties": null,
+                      "name": {
+                        "type": "string"
+                      },
+                      "address": {
+                        "type": "string"
+                      },
+                      "age": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                      }
+                    }
+                  ]
+                }
               },
-              {
-                "type": "string",
-                "enum": [
-                  "values",
-                  "messages-tuple",
-                  "updates",
-                  "debug",
-                  "custom"
-                ]
-              }
-            ],
-            "title": "Stream Mode",
-            "description": "The stream mode(s) to use.",
-            "default": [
-              "values"
-            ]
-          },
-          "on_completion": {
-            "type": "string",
-            "enum": [
-              "delete",
-              "keep"
-            ],
-            "title": "On Completion",
-            "description": "Whether to delete or keep the thread created for a stateless run. Must be one of 'delete' or 'keep'.",
-            "default": "delete"
-          },
-          "on_disconnect": {
-            "type": "string",
-            "enum": [
-              "cancel",
-              "continue"
-            ],
-            "title": "On Disconnect",
-            "description": "The disconnect mode to use. Must be one of 'cancel' or 'continue'.",
-            "default": "cancel"
-          },
-          "multitask_strategy": {
-            "type": "string",
-            "enum": [
-              "reject",
-              "rollback",
-              "interrupt",
-              "enqueue"
-            ],
-            "title": "Multitask Strategy",
-            "description": "Multitask strategy to use. Must be one of 'reject', 'interrupt', 'rollback', or 'enqueue'.",
-            "default": "reject"
-          },
-          "after_seconds": {
-            "type": "integer",
-            "title": "After Seconds",
-            "description": "The number of seconds to wait before starting the run. Use to schedule future runs."
+              "required": [
+                "interrupt_type",
+                "resume_payload",
+                "interrupt_payload"
+              ]
+            }
           }
         },
-        "type": "object",
-        "required": [],
-        "title": "RunCreateStateless",
-        "description": "Payload for creating a run."
+        "required": [
+          "capabilities",
+          "input",
+          "output",
+          "config"
+        ]
       },
-      "ThreadSearchRequest": {
+      "AgentSearchRequest": {
         "properties": {
-          "metadata": {
-            "type": "object",
-            "title": "Metadata",
-            "description": "Thread metadata to filter on."
-          },
-          "values": {
-            "type": "object",
-            "title": "Values",
-            "description": "State values to filter on."
-          },
-          "status": {
+          "name": {
             "type": "string",
-            "enum": [
-              "idle",
-              "busy",
-              "interrupted",
-              "error"
-            ],
-            "title": "Status",
-            "description": "Thread status to filter on."
+            "title": "Name",
+            "description": "Match all agents with the name specified."
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Match all agents with the version specified. Formatted according to semantic versioning (https://semver.org)"
           },
           "limit": {
             "type": "integer",
@@ -2167,16 +2057,179 @@
           }
         },
         "type": "object",
-        "title": "ThreadSearchRequest",
-        "description": "Payload for listing threads."
+        "title": "AgentSearchRequest",
+        "description": "Payload for listing agents."
       },
-      "Thread": {
+      "Run": {
+        "title": "Agent Run",
+        "description": "Holds all the information of a run",
         "properties": {
+          "creation": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RunCreateStateful"
+              },
+              {
+                "$ref": "#/components/schemas/RunCreateStateless"
+              }
+            ]
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "The ID of the run."
+          },
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Agent Id",
+            "description": "The agent that was used for this run."
+          },
           "thread_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Thread Id",
-            "description": "The ID of the thread."
+            "title": "Agent ID",
+            "description": "Optional Thread ID wher the Run belongs to. This is populated only for runs on agents agents supporting Threads."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "The time the run was created."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "The last time the run was updated."
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus",
+            "title": "Status",
+            "description": "The status of the run. One of 'pending', 'error', 'success', 'timeout', 'interrupted'."
+          }
+        },
+        "required": [
+          "creation",
+          "run_id",
+          "agent_id",
+          "created_at",
+          "updated_at",
+          "status"
+        ]
+      },
+      "RunCreateStateful": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunCreate"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "stream_subgraphs": {
+                "type": "boolean",
+                "title": "Stream Subgraphs",
+                "description": "Whether to stream output from subgraphs.",
+                "default": false
+              },
+              "if_not_exists": {
+                "type": "string",
+                "enum": [
+                  "create",
+                  "reject"
+                ],
+                "title": "If Not Exists",
+                "description": "How to handle missing thread. Must be either 'reject' (raise error if missing), or 'create' (create new thread).",
+                "default": "reject"
+              }
+            }
+          }
+        ],
+        "title": "RunCreateStateful",
+        "description": "Payload for creating a stateful run."
+      },
+      "RunWaitResponse": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/Run",
+            "title": "Run",
+            "description": "The run information."
+          },
+          "output": {
+            "$ref": "#/components/schemas/RunOutput"
+          }
+        }
+      },
+      "RunCreateStateless": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunCreate"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "on_completion": {
+                "type": "string",
+                "enum": [
+                  "delete",
+                  "keep"
+                ],
+                "title": "On Completion",
+                "description": "Whether to delete or keep the thread created for a stateless run. Must be one of 'delete' or 'keep'.",
+                "default": "delete"
+              }
+            }
+          }
+        ],
+        "title": "RunCreateStateful",
+        "description": "Payload for creating a stateless run."
+      },
+      "ThreadSearchRequest": {
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "title": "Metadata Filter",
+            "description": "Matches all threads for which metadata has  keys and values equal to those specified in this object."
+          },
+          "values": {
+            "type": "object",
+            "title": "Values",
+            "description": "State values to filter on."
+          },
+          "status": {
+            "$ref": "#/components/schemas/ThreadStatus"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Maximum number to return.",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Offset to start from.",
+            "default": 0,
+            "minimum": 0
+          }
+        },
+        "type": "object",
+        "title": "Thread Search Request",
+        "description": "Payload for listing threads."
+      },
+      "Thread": {
+        "type": "object",
+        "title": "Thread",
+        "description": "Represents a collection of consecutive runs over a thread.  Thread is associated with a state. Runs for a thread can potentially happen across different agents, if the state format is compatible.",
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread ID",
+            "description": "unique identifier of a thread"
           },
           "created_at": {
             "type": "string",
@@ -2193,7 +2246,7 @@
           "metadata": {
             "type": "object",
             "title": "Metadata",
-            "description": "The thread metadata."
+            "description": "Free form metadata for this thread"
           },
           "status": {
             "type": "string",
@@ -2207,9 +2260,9 @@
             "description": "The status of the thread."
           },
           "values": {
-            "type": "object",
             "title": "Values",
-            "description": "The current state of the thread."
+            "description": "The current state of the thread.",
+            "$ref": "#/components/schemas/ThreadStateSchema"
           },
           "messages": {
             "type": "array",
@@ -2220,15 +2273,13 @@
             "description": "The current Messages of the thread. If messages are contained in Thread.values, implementations should remove them from values when returning messages. When this key isn't present it means the thread/agent doesn't support messages."
           }
         },
-        "type": "object",
         "required": [
           "thread_id",
           "created_at",
           "updated_at",
           "metadata",
           "status"
-        ],
-        "title": "Thread"
+        ]
       },
       "ThreadCheckpoint": {
         "properties": {
@@ -2255,9 +2306,9 @@
             "description": "The identifier for this checkpoint."
           },
           "values": {
-            "type": "object",
             "title": "Values",
-            "description": "The current state of the thread."
+            "description": "The current state of the thread.",
+            "$ref": "#/components/schemas/ThreadStateSchema"
           },
           "messages": {
             "type": "array",
@@ -2281,6 +2332,9 @@
         "title": "ThreadState"
       },
       "ThreadCreate": {
+        "type": "object",
+        "title": "Thread",
+        "description": "Detail of an empty thread to be created.",
         "properties": {
           "thread_id": {
             "type": "string",
@@ -2291,7 +2345,7 @@
           "metadata": {
             "type": "object",
             "title": "Metadata",
-            "description": "Metadata to add to thread."
+            "description": "Free form metadata for this thread"
           },
           "if_exists": {
             "type": "string",
@@ -2303,10 +2357,7 @@
             "description": "How to handle duplicate creation. Must be either 'raise' (raise error if duplicate), or 'do_nothing' (return existing thread).",
             "default": "raise"
           }
-        },
-        "type": "object",
-        "title": "ThreadCreate",
-        "description": "Payload for creating a thread."
+        }
       },
       "ThreadPatch": {
         "properties": {
@@ -2321,9 +2372,9 @@
             "description": "Metadata to merge with existing thread metadata."
           },
           "values": {
-            "type": "object",
             "title": "Values",
-            "description": "Values to merge with existing thread values."
+            "description": "The current state of the thread.",
+            "$ref": "#/components/schemas/ThreadStateSchema"
           },
           "messages": {
             "type": "array",
@@ -2337,174 +2388,6 @@
         "type": "object",
         "title": "ThreadPatch",
         "description": "Payload for updating a thread."
-      },
-      "StorePutRequest": {
-        "type": "object",
-        "required": [
-          "namespace",
-          "key",
-          "value"
-        ],
-        "properties": {
-          "namespace": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "title": "Namespace",
-            "description": "A list of strings representing the namespace path."
-          },
-          "key": {
-            "type": "string",
-            "title": "Key",
-            "description": "The unique identifier for the item within the namespace."
-          },
-          "value": {
-            "type": "object",
-            "title": "Value",
-            "description": "A dictionary containing the item's data."
-          }
-        },
-        "title": "StorePutRequest",
-        "description": "Request to store or update an item."
-      },
-      "StoreDeleteRequest": {
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "properties": {
-          "namespace": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "title": "Namespace",
-            "description": "A list of strings representing the namespace path."
-          },
-          "key": {
-            "type": "string",
-            "title": "Key",
-            "description": "The unique identifier for the item."
-          }
-        },
-        "title": "StoreDeleteRequest",
-        "description": "Request to delete an item."
-      },
-      "StoreSearchRequest": {
-        "type": "object",
-        "properties": {
-          "namespace_prefix": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "type": "string"
-            },
-            "title": "Namespace Prefix",
-            "description": "List of strings representing the namespace prefix."
-          },
-          "filter": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": true,
-            "title": "Filter",
-            "description": "Optional dictionary of key-value pairs to filter results."
-          },
-          "limit": {
-            "type": "integer",
-            "default": 10,
-            "title": "Limit",
-            "description": "Maximum number of items to return (default is 10)."
-          },
-          "offset": {
-            "type": "integer",
-            "default": 0,
-            "title": "Offset",
-            "description": "Number of items to skip before returning results (default is 0)."
-          }
-        },
-        "title": "StoreSearchRequest",
-        "description": "Request to search for items within a namespace prefix."
-      },
-      "StoreListNamespacesRequest": {
-        "type": "object",
-        "properties": {
-          "prefix": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "title": "Prefix",
-            "description": "Optional list of strings representing the prefix to filter namespaces."
-          },
-          "suffix": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "title": "Suffix",
-            "description": "Optional list of strings representing the suffix to filter namespaces."
-          },
-          "max_depth": {
-            "type": "integer",
-            "title": "Max Depth",
-            "description": "Optional integer specifying the maximum depth of namespaces to return."
-          },
-          "limit": {
-            "type": "integer",
-            "default": 100,
-            "title": "Limit",
-            "description": "Maximum number of namespaces to return (default is 100)."
-          },
-          "offset": {
-            "type": "integer",
-            "default": 0,
-            "title": "Offset",
-            "description": "Number of namespaces to skip before returning results (default is 0)."
-          }
-        }
-      },
-      "Item": {
-        "type": "object",
-        "required": [
-          "namespace",
-          "key",
-          "value",
-          "created_at",
-          "updated_at"
-        ],
-        "properties": {
-          "namespace": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The namespace of the item. A namespace is analogous to a document's directory."
-          },
-          "key": {
-            "type": "string",
-            "description": "The unique identifier of the item within its namespace. In general, keys needn't be globally unique."
-          },
-          "value": {
-            "type": "object",
-            "description": "The value stored in the item. This is the document itself."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the item was created."
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The timestamp when the item was last updated."
-          }
-        },
-        "description": "Represents a single document or data entry in the graph's Store. Items are used to store cross-thread memories."
       },
       "Message": {
         "type": "object",
@@ -2583,83 +2466,428 @@
         ],
         "additionalProperties": true
       },
-      "SearchItemsResponse": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Item"
-            }
-          }
-        }
-      },
-      "ListNamespaceResponse": {
-        "type": "array",
-        "items": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
       "ErrorResponse": {
         "type": "string",
         "title": "ErrorResponse",
         "description": "Error message returned from the server"
-      }
-    },
-    "responses": {
-      "GetItemResponse": {
-        "description": "Successful retrieval of an item.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Item"
-            }
+      },
+      "RunCreate": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "The agent ID to run. If not provided will use the default agent for this service."
+          },
+          "input": {
+            "$ref": "#/components/schemas/InputSchema"
+          },
+          "metadata": {
+            "type": "object",
+            "title": "Metadata",
+            "description": "Metadata to assign to the run."
+          },
+          "config": {
+            "properties": {
+              "tags": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Tags"
+              },
+              "recursion_limit": {
+                "type": "integer",
+                "title": "Recursion Limit"
+              },
+              "configurable": {
+                "$ref": "#/components/schemas/ConfigSchema"
+              }
+            },
+            "type": "object",
+            "title": "Config",
+            "description": "The configuration for the agent."
+          },
+          "webhook": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 65536,
+            "minLength": 1,
+            "title": "Status change webhook",
+            "description": "Webhook to call upon change of run status. This is a url that accepts a POST containing the `Run` object as body. See Callbacks definition."
+          },
+          "stream_mode": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StreamingMode"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/StreamingMode"
+              }
+            ],
+            "title": "Stream Mode",
+            "description": "If populated, indicates that the client requests to stream results with the specified streaming mode(s). The requested streaming mode(s) must be one or more of those supported by the agent as declared in agent ACP descriptor  under `specs.capabilities`",
+            "default": null
+          },
+          "on_disconnect": {
+            "type": "string",
+            "enum": [
+              "cancel",
+              "continue"
+            ],
+            "title": "On Disconnect",
+            "description": "The disconnect mode to use. Must be one of 'cancel' or 'continue'.",
+            "default": "cancel"
+          },
+          "multitask_strategy": {
+            "type": "string",
+            "enum": [
+              "reject",
+              "rollback",
+              "interrupt",
+              "enqueue"
+            ],
+            "title": "Multitask Strategy",
+            "description": "Multitask strategy to use. Must be one of 'reject', 'interrupt', 'rollback', or 'enqueue'.",
+            "default": "reject"
+          },
+          "after_seconds": {
+            "type": "integer",
+            "title": "After Seconds",
+            "description": "The number of seconds to wait before starting the run. Use to schedule future runs."
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "RunCreateStateful",
+        "description": "Payload for creating a run."
+      },
+      "StreamingMode": {
+        "type": "string",
+        "enum": [
+          "values",
+          "custom"
+        ]
+      },
+      "RunStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "error",
+          "success",
+          "timeout",
+          "interrupted"
+        ]
+      },
+      "ThreadStatus": {
+        "type": "string",
+        "enum": [
+          "idle",
+          "busy",
+          "interrupted",
+          "error"
+        ]
+      },
+      "RunSearchRequest": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Agent Id",
+            "description": "Matches all the Runs associated with the specified Agent ID."
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus",
+            "title": "Status",
+            "description": "Matches all the Runs associated with the specified status. One of 'pending', 'error', 'success', 'timeout', 'interrupted'."
+          },
+          "metadata": {
+            "type": "object",
+            "title": "Metadata Filter",
+            "description": "Matches all threads for which metadata has  keys and values equal to those specified in this object."
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Maximum number to return.",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Offset to start from.",
+            "default": 0,
+            "minimum": 0
+          }
+        },
+        "type": "object",
+        "title": "Run Search Request",
+        "description": "Payload for listing runs."
+      },
+      "RunOutput": {
+        "title": "Run Output",
+        "description": "Output of a Run. Can be the final result or an interrupt.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RunResult"
+          },
+          {
+            "$ref": "#/components/schemas/RunInterrupt"
+          },
+          {
+            "$ref": "#/components/schemas/RunError"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "result": "#/components/schemas/RunResult",
+            "interrupt": "#/components/schemas/RunInterrupt",
+            "error": "#/components/schemas/RunError"
           }
         }
       },
-      "PutItemResponse": {
-        "description": "Item successfully stored or updated.",
-        "content": {}
+      "RunResult": {
+        "title": "Run Result",
+        "description": "Final result of a Run.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "Output Type",
+            "type": "string",
+            "enum": [
+              "result"
+            ]
+          },
+          "values": {
+            "$ref": "#/components/schemas/OutputSchema"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "title": "Messages",
+            "description": "The messages returned by the run."
+          }
+        },
+        "required": [
+          "type"
+        ]
       },
-      "DeleteItemResponse": {
-        "description": "Item successfully deleted.",
-        "content": {}
+      "ValueRunResultUpdate": {
+        "title": "Value Run Result Update",
+        "description": "Partial result provided as value through streaming.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "Streaming Output Type",
+            "type": "string",
+            "enum": [
+              "values"
+            ]
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "The ID of the run."
+          },
+          "status": {
+            "title": "Run Status",
+            "description": "Status of the Run when this result was generated. This is particurarly useful when this data structure is used for streaming results. As the server can indicate an interrupt or an error condition while streaming the result.",
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "values": {
+            "$ref": "#/components/schemas/OutputSchema"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "title": "Messages",
+            "description": "Stream of messages returned by the run."
+          }
+        },
+        "required": [
+          "type",
+          "run_id",
+          "status",
+          "value"
+        ]
       },
-      "SearchItemsResponse": {
-        "description": "Successful search operation.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SearchItemsResponse"
+      "RunOutputStream": {
+        "type": "object",
+        "title": "Run Output Stream Event",
+        "description": "Server-sent event containing one agent output event. Actual event type is carried inside the data.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the event",
+            "title": "Event ID"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "agent_event"
+            ],
+            "description": "Event type. This is the constant string `agent_event` to be compatible with SSE spec. The actual type differentiation is done in the event itself."
+          },
+          "data": {
+            "title": "Stream Event Payload",
+            "description": "A serialized JSON data structure carried in the SSE event data field. The event can carry either a full `ValueRunResultUpdate`, if streaming mode is `values` or an `CustomRunResultUpdate` if streaming mode is `custom`",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ValueRunResultUpdate"
+              },
+              {
+                "$ref": "#/components/schemas/CustomRunResultUpdate"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "values": "#/components/schemas/ValueRunResultUpdate",
+                "custom": "#/components/schemas/CustomRunResultUpdate"
+              }
             }
           }
-        }
+        },
+        "required": [
+          "id",
+          "event",
+          "data"
+        ]
       },
-      "ListNamespacesResponse": {
-        "description": "Successful retrieval of namespaces.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ListNamespaceResponse"
-            }
+      "CustomRunResultUpdate": {
+        "title": "Custom Run Result Update",
+        "description": "Object holding a custom defined update of the agent result during streaming.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "Streaming Output Type",
+            "type": "string",
+            "enum": [
+              "custom"
+            ]
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "The ID of the run."
+          },
+          "status": {
+            "title": "Run Status",
+            "description": "Status of the Run when this result was generated",
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "update": {
+            "$ref": "#/components/schemas/StreamUpdateSchema"
           }
-        }
+        },
+        "required": [
+          "type",
+          "status",
+          "update"
+        ]
       },
-      "ErrorResponse": {
-        "description": "An error occurred.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponse"
-            }
+      "RunError": {
+        "title": "Run Error",
+        "description": "Run terminated with an error",
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "Output Type",
+            "type": "string",
+            "enum": [
+              "error"
+            ]
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "The ID of the run."
+          },
+          "errcode": {
+            "type": "integer",
+            "title": "Error Code",
+            "description": "code of the error"
+          },
+          "description": {
+            "type": "string",
+            "title": "Error Description",
+            "description": "description of the error"
           }
-        }
+        },
+        "required": [
+          "type",
+          "run_id",
+          "errcode",
+          "description"
+        ]
+      },
+      "RunInterrupt": {
+        "title": "Run Interrupt",
+        "description": "Interrupt occurred during a Run",
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "Output Type",
+            "type": "string",
+            "enum": [
+              "interrupt"
+            ]
+          },
+          "interrupt": {
+            "$ref": "#/components/schemas/InterruptPayloadSchema"
+          }
+        },
+        "required": [
+          "type",
+          "interrupt"
+        ]
+      },
+      "InputSchema": {
+        "type": "object",
+        "title": "Input Schema",
+        "description": "The input to the agent. The schema is described in agent ACP descriptor under 'spec.thread_state'.'input'."
+      },
+      "OutputSchema": {
+        "type": "object",
+        "title": "Output Schema",
+        "description": "The output of the agent. The schema is described in agent ACP descriptor under 'spec.output'."
+      },
+      "ConfigSchema": {
+        "type": "object",
+        "title": "Config",
+        "description": "The configuration for this agent. The schema is described in agent ACP descriptor under 'spec.config'. If missing, default values are used."
+      },
+      "ThreadStateSchema": {
+        "type": "object",
+        "title": "Thread State Schema",
+        "description": "The thread state. The schema is described in agent ACP descriptor under 'spec.thread_state'."
+      },
+      "StreamUpdateSchema": {
+        "type": "object",
+        "title": "Stream Update Schema",
+        "description": "An update in the SSE event streaming where streaming mode is set to custom. The schema is described in agent ACP descriptor under 'spec.custom_streaming_update'."
+      },
+      "InterruptPayloadSchema": {
+        "type": "object",
+        "title": "Interrupt Payload",
+        "description": "This schema describes the interrupt payload. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`. The discriminator is the `interrupt_type`, while the schemas will be the ones defined in the agent spec under `interrupts`/`interrupt_payload` For example:          oneOf:\n  - $ref: '#/components/schemas/ApprovalInterruptPayload'\n  - $ref: '#/components/schemas/QuestionInterruptPayload'\ndiscriminator:\n  propertyName: interruput_type\n  mapping:\n    approval: '#/components/schemas/ApprovalInterruptPayload'\n    question: '#/components/schemas/QuestionInterruptPayload'"
+      },
+      "ResumePayloadSchema": {
+        "type": "object",
+        "title": "Resume Payload Schema",
+        "description": "This schema describes the resume payload after an interrupt. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`. The discriminator is the `interrupt_type`, while the schemas will be those defined in the agent spec under `interrupts`/`resume_payload` For example:          oneOf:\n  - $ref: '#/components/schemas/ApprovalResumePayload'\n  - $ref: '#/components/schemas/QuestionResumePayload'\ndiscriminator:\n  propertyName: interrupt_type\n  mapping:\n    approval: '#/components/schemas/ApprovalResumePayload'\n    question: '#/components/schemas/QuestionResumePayload'"
       }
     }
   }
