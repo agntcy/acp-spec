@@ -20,7 +20,7 @@ See [ACP Documentation](https://agntcy.github.io/acp-spec)
 
 See [IoA Documentation](https://docs.agntcy.org) for more info on Internet of Agents.
 
-See ACP specification in [YAML Format](openapi.yaml) or browse its [OpenAPI visualization](https://agntcy.github.io/acp-spec/docs/openapi.html)
+See ACP specification in [JSON Format](openapi.json) or browse its [OpenAPI visualization](https://agntcy.github.io/acp-spec/docs/openapi.html)
 
 
 ## Roadmap
