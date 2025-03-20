@@ -2291,7 +2291,6 @@
           }
         },
         "type": "object",
-        "additionalProperties": true,
         "required": [
           "checkpoint_id"
         ],
@@ -2440,7 +2439,6 @@
                       "required": [
                         "type"
                       ],
-                      "additionalProperties": true,
                       "title": "MessageAnyBlock"
                     }
                   ]
@@ -2455,7 +2453,6 @@
           },
           "metadata": {
             "type": "object",
-            "additionalProperties": true,
             "title": "Metadata",
             "description": "The metadata of the message."
           }
@@ -2463,8 +2460,7 @@
         "required": [
           "role",
           "content"
-        ],
-        "additionalProperties": true
+        ]
       },
       "ErrorResponse": {
         "type": "string",
