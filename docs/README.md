@@ -66,7 +66,7 @@ sequenceDiagram
     C->>+S: GET /runs/{run_id}
     S->>-C: Run={run_id, status}
     end
-    C->>+S: GET /runs/{run_id}/output
+    C->>+S: GET /runs/{run_id}/wait
     S->>-C: RunOutput={type="result", result}
 ```
 In the sequence above:
@@ -77,7 +77,7 @@ In the sequence above:
 1. The server returns a run object which includes the run identifier and a status, the status at the beginning will be `pending`.
 1. The client retrieves the status of the run until completion.
 1. The server returns the run object with the updated status.
-1. The client request the output of the run.
+1. The client request the output of the run with the `wait` endpoint, which returns immediately, since the run is done.
 1. The server returns the final result of the run.
 
 >
@@ -93,14 +93,14 @@ sequenceDiagram
     participant S as ACP Server
     C->>+S: POST /runs {agent_id, input, config, metadata}
     S->>-C: Run={run_id, status="pending"}
-    C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
+    C->>+S: GET /runs/{run_id}/wait 
     S->>-C: RunOutput={type="result", result}
 ```
 
 In the sequence above:
 1. The client requests to start a run on a specific agent.
 1. The server returns a run object.
-1. The client request the output of the run providing additional `block_timeout` parameter, and blocks until run status changes or timeout expires.
+1. The client request the output of the run with the `wait` endpoint. In this case the request and blocks until run status changes.
 1. The server returns the final result of the run. Note that in case the timeout had expired before, the server would have returned no content.
 
 #### Start a Run of an Agent with a callback
@@ -115,14 +115,14 @@ sequenceDiagram
     C->>+S: POST /runs {agent_id, input, config, metadata, callback={POST /callme}}
     S->>-C: Run={run_id, status="pending"}
     S->>C: POST /callme Run={run_id, status="success"}
-    C->>+S: GET /runs/{run_id}/output
+    C->>+S: GET /runs/{run_id}/wait
     S->>-C: RunOutput={type="result", result}
 ```
 In the sequence above:
 1. The client requests to start a run on a specific agent, providing an additional `callback`.
 1. The server returns a run object.
 1. Upon status change, the server calls the provided call back with the run object.
-1. The client request the output of the run.
+1. The client request the output of the run with the `wait` endpoint, which returns immediately, since the run is done.
 1. The server return the final result of the run.
 
 ### Run Interrupt and Resume
@@ -148,12 +148,12 @@ sequenceDiagram
     participant S as ACP Server
     C->>+S: POST /runs {agent_id, input, config, metadata}
     S->>-C: Run={run_id, status="pending"}
-    C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
+    C->>+S: GET /runs/{run_id}/wait 
     S->>-C: RunOutput={type="interrupt", interrupt_type, interrupt_payload}
     note over C: collect needed input
     C->>+S: POST /runs/{run_id} {interrupt_type, resume_payload}
     S->>-C: Run={run_id, status="pending"}
-    C->>+S: GET /runs/{run_id}/output
+    C->>+S: GET /runs/{run_id}/wait
     S->>-C: RunOutput={type="result", result}
 ```
 In the sequence above:
@@ -174,6 +174,8 @@ Subsequent runs on the same thread use the previously created state, together wi
 
 The server offers ways to retrieve the current thread state, the history of the runs on a thread, and the evolution of the thread states over execution of runs.
 
+Runs over the same thread can be executed on different agents, as long as the agents support the same thread state format.
+
 >
 > Note that the format of the thread state is not specified by ACP, but it is (optionally) defined in the agent ACP descriptor. If specified, it can be retrieved by the client, if not it's not accessible to the client.
 >
@@ -186,45 +188,47 @@ sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
     rect rgb(240,240,240)
-    C->>+S: POST /runs {agent_id, message="Hello, my name is John?", config, metadata}
-    S->>-C: Run={run_id, status="pending", thread_id}
-    C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
+    C->>+S: POST /threads
+    S->>-C: Thread={thread_id, status="idle"}
+    C->>+S: POST /threads/{thread_id}/runs {agent_id, message="Hello, my name is John?", config, metadata}
+    S->>-C: Run={run_id, status="pending"}
+    C->>+S: GET /threads/{thread_id}/runs/{run_id}/wait 
     S->>-C: RunOutput={type="result", result={"message"="Hello John, how can I help?"}}
     end
     note right of S: state=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>]
     rect rgb(240,240,240)
-    C->>+S: POST /runs {agent_id, message="Can you remind my name?", config, metadata, thread_id}
-    S->>-C: Run={run_id, status="pending", thread_id}
-    C->>+S: GET /runs/{run_id}/output {"block_timeout"=60}
+    C->>+S: POST /threads/{thread_id}/runs {agent_id, message="Can you remind my name?", config, metadata}
+    S->>-C: Run={run_id, status="pending"}
+    C->>+S: GET /threads/{thread_id}/runs/{run_id}/wait 
     S->>-C: RunOutput={type="result", result={"message"="Yes, your name is John"}}
     end
     note right of S: state=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>"Can you remind my name?",<br/>"Yes, your name is John"<br/>]
-    C->>+S: GET /threads/{thread_id}/state {thread_id}
-    S->>-C: ThreadState=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>"Can you remind my name?",<br/>"Yes, your name is John"<br/>]
+    C->>+S: GET /threads/{thread_id} 
+    S->>-C: Thread{thread_id, status="idle", values=[<br/>"Hello, my name is John?",<br/>"Hello John, how can I help?"<br/>"Can you remind my name?",<br/>"Yes, your name is John"<br/>]}
 ```
 In the sequence above:
-1. The client starts the first run and provides the first message of the chat.
-1. The server returns the run object which **includes a thread ID** because the server supports thread runs.
+1. The client requests to create a thread on the server
+1. The server returns a thread object that contains a thread ID
+1. The client starts the first run on the created thread and provides the first message of the chat.
+1. The server returns the run object.
 1. The client requests the run output.
 1. The server returns the run output which is the next chat message from the agent and leaves a state with the current chat history.
-1. The client starts a new run providing:
-    * The same thread ID, which means that the run will use the existing state associated with the thread.
-    * The input for the run, i.e. the next message in the chat (assuming the existence of the chat history on the server).
+1. The client starts a new run on the same thread providing the input for the run, i.e. the next message in the chat (assuming the existence of the chat history on the server).
 1. The server starts the runs using the existing chat history and returns the run object.
 1. The client requests the run output.
 1. The server updates the thread state and returns the run output.
 1. Finally, the client requests the thread state (this is an optional operation).
-1. The server returns the current thread state which collects the whole chat history.
+1. The server returns the current thread object which collects the whole chat history.
 
 ### Output Streaming
-ACP supports output streaming. Agent can stream intermediate results of a Run to provide better response time and user experience.
+ACP supports output streaming. Agent can stream partial results of a Run to provide better response time and user experience.
 
 ACP implements streaming using Server Sent Events specified here: https://html.spec.whatwg.org/multipage/server-sent-events.html.
 
 In a nutshell, the client keeps the HTTP connection open and receives a stream of events from the server, where each event carries an update of the run result.
 
 ACP supports 2 streaming modes:
-1. **result** where each event contains a full instance of the RunResult, which fully replace the previous update.
+1. **values** where each event contains a full instance of the agent output, which fully replace the previous update.
 2. **custom** where the schema of the event is left unspecified by ACP, which it can be specified in the specific agent ACP descriptor under `spec.custom_streaming_update`
 
 #### Start a Run and stream output until completion
@@ -233,23 +237,21 @@ ACP supports 2 streaming modes:
 sequenceDiagram
     participant C as ACP Client
     participant S as ACP Server
-    C->>+S: POST /runs {agent_id, input, config, metadata, streaming='result'}
+    C->>+S: POST /runs/stream {agent_id, input, config, metadata, stream_mode='values'}
     S->>-C: Run={run_id, status="pending"}
-    C->>+S: GET /runs/{run_id}/stream 
     rect rgb(240,240,240)
-    S->>C: StreamEvent={id="1", event="agent_event", data={run_id, type="result", result={"message": "Hello"}}}
-    S->>C: StreamEvent={id="2", event="agent_event", data={run_id, type="result", result={"message": "Hello, how"}}}
-    S->>C: StreamEvent={id="2", event="agent_event", data={run_id, type="result", result={"message": "Hello, how can"}}}
-    S->>C: StreamEvent={id="3", event="agent_event", data={run_id, type="result", result={"message": "Hello, how can I help"}}}
-    S->>C: StreamEvent={id="4", event="agent_event", data={run_id, type="result", result={"message": "Hello, how can I help you"}}}
-    S->>C: StreamEvent={id="5", event="agent_event", data={run_id, type="result", result={"message": "Hello, how can I help you today"}}}
+    S->>C: StreamEvent={id="1", event="agent_event", data={run_id, type="values", result={"message": "Hello"}}}
+    S->>C: StreamEvent={id="2", event="agent_event", data={run_id, type="values", result={"message": "Hello, how"}}}
+    S->>C: StreamEvent={id="2", event="agent_event", data={run_id, type="values", result={"message": "Hello, how can"}}}
+    S->>C: StreamEvent={id="3", event="agent_event", data={run_id, type="values", result={"message": "Hello, how can I help"}}}
+    S->>C: StreamEvent={id="4", event="agent_event", data={run_id, type="values", result={"message": "Hello, how can I help you"}}}
+    S->>C: StreamEvent={id="5", event="agent_event", data={run_id, type="values", result={"message": "Hello, how can I help you today"}}}
     S->>C: Close Connection
     end
 ```
 
 In the sequence above:
-1. The client requests to start a run on a specific agent specifying streaming mode = 'result'.
-1. The server returns a run object.
+1. The client requests to start a run on a specific agent specifying stream_mode = 'values' and waits immediately for the streaming. 
 1. The client requests the output streaming and keeps the connection open.
 1. The server returns an event with message="Hello".
 1. The server returns an event with updated message "Hello, how".
