@@ -1410,6 +1410,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2200,18 +2210,19 @@
             "title": "Run Id",
             "description": "The ID of the run."
           },
-          "agent_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Agent Id",
-            "description": "The agent that was used for this run."
-          },
           "thread_id": {
             "type": "string",
             "format": "uuid",
             "title": "Agent ID",
             "description": "Optional Thread ID wher the Run belongs to. This is populated only for runs on agents agents supporting Threads."
           },
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Agent Id",
+            "description": "The agent that was used for this run."
+          },
+
           "created_at": {
             "type": "string",
             "format": "date-time",
