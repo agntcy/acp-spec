@@ -787,8 +787,8 @@
         "tags": [
           "Thread Runs"
         ],
-        "summary": "Create a run on a thread and wait for its output output",
-        "description": "Create a run on a thread and wait for its output. See 'GET /runs/{run_id}/wait' for details on the return values.",
+        "summary": "Create a run on a thread and block waiting for the result of the run",
+        "description": "Create a run on a thread and block waiting for its output. See 'GET /runs/{run_id}/wait' for details on the return values.",
         "operationId": "create_and_wait_for_thread_run_output",
         "parameters": [
           {
@@ -863,8 +863,8 @@
         "tags": [
           "Thread Runs"
         ],
-        "summary": "Retrieve last output of a run if available",
-        "description": "Retrieve the output of the run if available. See 'GET /runs/{run_id}/wait' for details on the return values.",
+        "summary": "Blocks waiting for the result of the run.",
+        "description": "Blocks waiting for the result of the run. See 'GET /runs/{run_id}/wait' for details on the return values.",
         "operationId": "wait_for_thread_run_output",
         "parameters": [
           {
@@ -1500,8 +1500,8 @@
         "tags": [
           "Stateless Runs"
         ],
-        "summary": "Retrieve last output of a run if available",
-        "description": "Retrieve the last output of the run.  The output can be:\n  * an interrupt, this happens when the agent run status is `interrupted`\n  * the final result of the run, this happens when the agent run status is `success`\n  * an error, this happens when the agent run status is `error` or `timeout`\n\n\nThis call blocks until the output is available.",
+        "summary": "Blocks waiting for the result of the run.",
+        "description": "Blocks waiting for the result of the run. The output can be:\n  * an interrupt, this happens when the agent run status is `interrupted`\n  * the final result of the run, this happens when the agent run status is `success`\n  * an error, this happens when the agent run status is `error` or `timeout`\n\n\nThis call blocks until the output is available.",
         "operationId": "wait_for_stateless_run_output",
         "parameters": [
           {
@@ -1888,7 +1888,7 @@
           },
           "url": {
             "title": "Agent Record URL",
-            "description": "URL of the record. Can be a network location or a file.",
+            "description": "URL of the record. Can be a network location, i.e. an entry in the Agent Directory or a file.",
             "type": "string",
             "format": "uri"
           }
