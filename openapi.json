@@ -2652,7 +2652,8 @@
               },
               {
                 "$ref": "#/components/schemas/StreamingMode"
-              }
+              },
+              { "type": "null" }
             ],
             "title": "Stream Mode",
             "description": "If populated, indicates that the client requests to stream results with the specified streaming mode(s). The requested streaming mode(s) must be one or more of those supported by the agent as declared in agent ACP descriptor  under `specs.capabilities`",
@@ -2845,7 +2846,7 @@
           "type",
           "run_id",
           "status",
-          "value"
+          "values"
         ]
       },
       "RunOutputStream": {
