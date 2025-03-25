@@ -4,10 +4,6 @@
     "title": "Agent Connect Protocol",
     "version": "0.2.0"
   },
-  "security": [
-    {},
-    { "x-api-key": [] }
-  ],
   "tags": [
     {
       "name": "Agents",
@@ -1835,13 +1831,6 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "x-api-key": {
-        "type": "apiKey",
-        "name": "x-api-key",
-        "in": "header"
-      }
-    },
     "schemas": {
       "Agent": {
         "title": "Agent",
