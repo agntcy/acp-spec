@@ -5,7 +5,8 @@
     "version": "0.2.0"
   },
   "security": [
-    { "wfsm-api-key": [] }
+    {},
+    { "x-api-key": [] }
   ],
   "tags": [
     {
@@ -1835,7 +1836,7 @@
   },
   "components": {
     "securitySchemes": {
-      "wfsm-api-key": {
+      "x-api-key": {
         "type": "apiKey",
         "name": "x-api-key",
         "in": "header"
