@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Agent Connect Protocol",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "tags": [
     {
@@ -593,7 +593,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/Run"
+                    "$ref": "#/components/schemas/RunStateful"
                   },
                   "type": "array"
                 }
@@ -648,7 +648,7 @@
                   "content": {
                     "application/json": {
                       "schema": {
-                        "$ref": "#/components/schemas/Run"
+                        "$ref": "#/components/schemas/RunStateful"
                       }
                     }
                   }
@@ -668,7 +668,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Run"
+                  "$ref": "#/components/schemas/RunStateful"
                 }
               }
             }
@@ -820,7 +820,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunWaitResponse"
+                  "$ref": "#/components/schemas/RunWaitResponseStateful"
                 }
               }
             }
@@ -898,7 +898,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunWaitResponse"
+                  "$ref": "#/components/schemas/RunWaitResponseStateful"
                 }
               }
             }
@@ -966,7 +966,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Run"
+                  "$ref": "#/components/schemas/RunStateful"
                 }
               }
             }
@@ -1016,7 +1016,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Run"
+                  "$ref": "#/components/schemas/RunStateful"
                 }
               }
             }
@@ -1267,7 +1267,7 @@
                   "content": {
                     "application/json": {
                       "schema": {
-                        "$ref": "#/components/schemas/Run"
+                        "$ref": "#/components/schemas/RunStateless"
                       }
                     }
                   }
@@ -1287,7 +1287,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Run"
+                  "$ref": "#/components/schemas/RunStateless"
                 }
               }
             }
@@ -1350,7 +1350,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/Run"
+                    "$ref": "#/components/schemas/RunStateless"
                   },
                   "type": "array",
                   "title": "Run Search Response"
@@ -1457,7 +1457,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunWaitResponse"
+                  "$ref": "#/components/schemas/RunWaitResponseStateless"
                 }
               }
             }
@@ -1523,7 +1523,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunWaitResponse"
+                  "$ref": "#/components/schemas/RunWaitResponseStateless"
                 }
               }
             }
@@ -1579,7 +1579,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Run"
+                  "$ref": "#/components/schemas/RunStateless"
                 }
               }
             }
@@ -1629,7 +1629,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Run"
+                  "$ref": "#/components/schemas/RunStateless"
                 }
               }
             }
@@ -2192,18 +2192,8 @@
       },
       "Run": {
         "title": "Agent Run",
-        "description": "Holds all the information of a run",
+        "description": "Holds common information of a run",
         "properties": {
-          "creation": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/RunCreateStateful"
-              },
-              {
-                "$ref": "#/components/schemas/RunCreateStateless"
-              }
-            ]
-          },
           "run_id": {
             "type": "string",
             "format": "uuid",
@@ -2222,7 +2212,6 @@
             "title": "Agent Id",
             "description": "The agent that was used for this run."
           },
-
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -2242,12 +2231,55 @@
           }
         },
         "required": [
-          "creation",
           "run_id",
           "agent_id",
           "created_at",
           "updated_at",
           "status"
+        ]
+      },
+      "RunStateless": {
+        "title": "Agent Run Stateless",
+        "description": "Holds all the information of a stateless run",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Run"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "creation": {
+                "$ref": "#/components/schemas/RunCreateStateless",
+                "title": "Creation",
+                "description": ""
+              }
+            },
+            "required": [
+              "creation"
+            ]
+          }
+        ]
+      },
+      "RunStateful": {
+        "title": "Agent Run Stateful",
+        "description": "Holds all the information of a stateful run",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Run"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "creation": {
+                "$ref": "#/components/schemas/RunCreateStateful",
+                "title": "Creation",
+                "description": ""
+              }
+            },
+            "required": [
+              "creation"
+            ]
+          }
         ]
       },
       "RunCreateStateful": {
@@ -2280,11 +2312,24 @@
         "title": "RunCreateStateful",
         "description": "Payload for creating a stateful run."
       },
-      "RunWaitResponse": {
+      "RunWaitResponseStateful": {
         "type": "object",
         "properties": {
           "run": {
-            "$ref": "#/components/schemas/Run",
+            "$ref": "#/components/schemas/RunStateful",
+            "title": "Run",
+            "description": "The run information."
+          },
+          "output": {
+            "$ref": "#/components/schemas/RunOutput"
+          }
+        }
+      },
+      "RunWaitResponseStateless": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/RunStateless",
             "title": "Run",
             "description": "The run information."
           },
@@ -2314,7 +2359,7 @@
             }
           }
         ],
-        "title": "RunCreateStateful",
+        "title": "RunCreateStateless",
         "description": "Payload for creating a stateless run."
       },
       "ThreadSearchRequest": {
