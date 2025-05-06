@@ -10,7 +10,7 @@ endeavor to review incoming issues and pull requests within 10 days, and will
 close any lingering issues or pull requests after 60 days of inactivity.
 
 Please note that all of your interactions in the project are subject to our
-[Code of Conduct](/CODE_OF_CONDUCT.md). This includes creation of issues or pull
+[Code of Conduct](CODE_OF_CONDUCT.md). This includes creation of issues or pull
 requests, commenting on issues or pull requests, and extends to all interactions
 in any real-time space e.g., Slack, Discord, etc.
 
@@ -25,7 +25,7 @@ description**, as much relevant information as possible, and, if possible, a
 test case.
 
 **If you discover a security bug, please do not report it through GitHub.
-Instead, please see security procedures in [SECURITY.md](/SECURITY.md).**
+Instead, please see security procedures in [SECURITY.md](SECURITY.md).**
 
 ## Sending Pull Requests
 

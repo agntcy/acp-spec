@@ -1,27 +1,22 @@
 # Agent Connect Protocol Specification
 
-[![Release](https://img.shields.io/github/v/release/agntcy/acp-spec?display_name=tag)](CHANGELOG.md)
-[![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-fbab2c.svg)](CODE_OF_CONDUCT.md)
-
 ## About The Project
 
-This repo contains the specification of Agent Connect Protocol (ACP)
+This repo contains the specification of Agent Connect Protocol (ACP) proposed by the Agntcy Collective. The Agent Connect Protocol defines a standard interface to invoke and configure remote agents over an API. The protocol is specified in [OpenAPI](https://www.openapis.org/what-is-openapi) a REST-based schema specification.
 
-Agent Connect Protocol defines a standard interface to invoke and configure agents.
+More about how ACP fits into the bigger picture of the [Internet of Agents as seen by Agntcy](https://docs.agntcy.org/index.html) can be found in the documentation [here.](https://docs.agntcy.org/pages/introduction.html)
+
 
 ## Getting Started
 
-See [Getting Started Guide](docs/README.md#getting-started)
+See [Getting Started Guide](https://docs.agntcy.org/pages/syntactic_sdk/agntcy_acp_spec.md#getting-started)
 
 
 ## Documentation
 
-See [ACP Documentation](https://agntcy.github.io/acp-spec)
+See current ACP specification in [JSON Format](openapi.json) or browse its [OpenAPI visualization](https://spec.acp.agntcy.org/)
 
-See [IoA Documentation](https://docs.agntcy.org) for more info on Internet of Agents.
-
-See ACP specification in [JSON Format](openapi.json) or browse its [OpenAPI visualization](https://agntcy.github.io/acp-spec/docs/openapi.html)
-
+For more information on the background of the specification and the design requirements, please see the [ACP spec documentation on the Agntcy Docs](https://docs.agntcy.org/pages/syntactic_sdk/connect.html)
 
 ## Roadmap
 
@@ -33,11 +28,11 @@ of additional proposed features (and known issues).
 Contributions are what make the open source community such an amazing place to
 learn, inspire, and create. Any contributions you make are **greatly
 appreciated**. For detailed contributing guidelines, please see
-[CONTRIBUTING.md](docs/CONTRIBUTING.md)
+[CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Copyright Notice
 
-[Copyright Notice and License](./LICENSE)
+[Copyright Notice and License](LICENSE)
 
 Distributed under Apache 2.0 License. See LICENSE for more information.
 Copyright AGNTCY Contributors (https://github.com/agntcy)
