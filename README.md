@@ -4,12 +4,12 @@
 
 This repo contains the specification of Agent Connect Protocol (ACP) proposed by the Agntcy Collective. The Agent Connect Protocol defines a standard interface to invoke and configure remote agents over an API. The protocol is specified in [OpenAPI](https://www.openapis.org/what-is-openapi) a REST-based schema specification.
 
-More about how ACP fits into the bigger picture of the [Internet of Agents as seen by Agntcy](https://docs.agntcy.org/index.html) can be found in the documentation [here.](https://docs.agntcy.org/pages/introduction.html)
+More about how ACP fits into the bigger picture of the [Internet of Agents as seen by Agntcy](https://docs.agntcy.org/) can be found in the documentation [Introduction.](https://docs.agntcy.org/pages/introduction.html)
 
 
 ## Getting Started
 
-See [Getting Started Guide](https://docs.agntcy.org/pages/syntactic_sdk/agntcy_acp_spec.md#getting-started)
+To get started with the ACP protocol, please see the [Getting Started Guide](https://docs.agntcy.org/pages/syntactic_sdk/connect.html#getting-started)
 
 
 ## Documentation
