@@ -2982,7 +2982,6 @@
         "title": "Value Run Error Update",
         "description": "Partial result provided as value through streaming.",
         "type": "object",
-        "properties": {
         "allOf": [
           {
             "$ref": "#/components/schemas/RunError"
@@ -3042,7 +3041,6 @@
         "title": "Value Run Interrupt Update",
         "description": "Partial result provided as value through streaming.",
         "type": "object",
-        "properties": {
         "allOf": [
           {
             "$ref": "#/components/schemas/RunInterrupt"
