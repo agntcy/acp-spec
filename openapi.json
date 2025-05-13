@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Agent Connect Protocol",
-    "version": "0.2.1"
+    "version": "0.2.2"
   },
   "tags": [
     {
@@ -2872,7 +2872,7 @@
           },
           "status": {
             "title": "Run Status",
-            "description": "Status of the Run when this result was generated. This is particurarly useful when this data structure is used for streaming results. As the server can indicate an interrupt or an error condition while streaming the result.",
+            "description": "Status of the Run when this result was generated. This is particularly useful when this data structure is used for streaming results. As the server can indicate an interrupt or an error condition while streaming the result.",
             "$ref": "#/components/schemas/RunStatus"
           },
           "values": {
@@ -2920,13 +2920,21 @@
               },
               {
                 "$ref": "#/components/schemas/CustomRunResultUpdate"
+              },
+              {
+                "$ref": "#/components/schemas/ValueRunInterruptUpdate"
+              },
+              {
+                "$ref": "#/components/schemas/ValueRunErrorUpdate"
               }
             ],
             "discriminator": {
               "propertyName": "type",
               "mapping": {
                 "values": "#/components/schemas/ValueRunResultUpdate",
-                "custom": "#/components/schemas/CustomRunResultUpdate"
+                "custom": "#/components/schemas/CustomRunResultUpdate",
+                "interrupt": "#/components/schemas/ValueRunInterruptUpdate",
+                "error": "#/components/schemas/ValueRunErrorUpdate"
               }
             }
           }
@@ -2970,6 +2978,30 @@
           "update"
         ]
       },
+      "ValueRunErrorUpdate": {
+        "title": "Value Run Error Update",
+        "description": "Partial result provided as value through streaming.",
+        "type": "object",
+        "properties": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunError"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "title": "Run Status",
+                "description": "Status of the Run when this result was generated. This is particularly useful when this data structure is used for streaming results. As the server can indicate an interrupt or an error condition while streaming the result.",
+                "$ref": "#/components/schemas/RunStatus"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        ]
+      },
       "RunError": {
         "title": "Run Error",
         "description": "Run terminated with an error",
@@ -3004,6 +3036,37 @@
           "run_id",
           "errcode",
           "description"
+        ]
+      },
+      "ValueRunInterruptUpdate": {
+        "title": "Value Run Interrupt Update",
+        "description": "Partial result provided as value through streaming.",
+        "type": "object",
+        "properties": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunInterrupt"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "run_id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Run Id",
+                "description": "The ID of the run."
+              },
+              "status": {
+                "title": "Run Status",
+                "description": "Status of the Run when this result was generated. This is particularly useful when this data structure is used for streaming results. As the server can indicate an interrupt or an error condition while streaming the result.",
+                "$ref": "#/components/schemas/RunStatus"
+              }
+            },
+            "required": [
+              "run_id",
+              "status"
+            ]
+          }
         ]
       },
       "RunInterrupt": {
