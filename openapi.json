@@ -1984,6 +1984,13 @@
                     "minimum": 0
                   }
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "description": "User's age"
+                
               }
             ]
           },
@@ -2008,6 +2015,13 @@
                   "format": "int32",
                   "minimum": 0
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "description": "User's age"
+                
               }
             ]
           },
@@ -2056,6 +2070,11 @@
                   "format": "int32",
                   "minimum": 0
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "description": "An integer value"                
               }
             ]
           },
@@ -2080,6 +2099,13 @@
                   "format": "int32",
                   "minimum": 0
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "description": "An integer value"
+                
               }
             ]
           },
@@ -3089,24 +3115,108 @@
         ]
       },
       "InputSchema": {
-        "type": "object",
         "title": "Input Schema",
-        "description": "The input to the agent. The schema is described in agent ACP descriptor under 'spec.thread_state'.'input'."
+        "description": "The input of the agent. The schema is described in agent ACP descriptor under 'spec.input'.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String input to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer input to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number input to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean input to the agent."
+          }
+        ]
       },
       "OutputSchema": {
-        "type": "object",
         "title": "Output Schema",
-        "description": "The output of the agent. The schema is described in agent ACP descriptor under 'spec.output'."
+        "description": "The output of the agent. The schema is described in agent ACP descriptor under 'spec.output'.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String output to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer output to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number output to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean output to the agent."
+          }
+        ]
       },
       "ConfigSchema": {
-        "type": "object",
         "title": "Config",
-        "description": "The configuration for this agent. The schema is described in agent ACP descriptor under 'spec.config'. If missing, default values are used."
+        "description": "The configuration for this agent. The schema is described in agent ACP descriptor under 'spec.config'. If missing, default values are used.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String config to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer config to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number config to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean config to the agent."
+          }
+        ]
       },
       "ThreadStateSchema": {
-        "type": "object",
         "title": "Thread State Schema",
-        "description": "The thread state. The schema is described in agent ACP descriptor under 'spec.thread_state'."
+        "description": "The thread state. The schema is described in agent ACP descriptor under 'spec.thread_state'.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String thread state to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer thread state to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number thread state to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean thread state to the agent."
+          }
+        ]        
       },
       "StreamUpdateSchema": {
         "type": "object",
