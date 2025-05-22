@@ -3137,6 +3137,11 @@
           {
             "type": "boolean",
             "description": "Boolean input to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
           }
         ]
       },
@@ -3163,6 +3168,11 @@
           {
             "type": "boolean",
             "description": "Boolean output to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
           }
         ]
       },
@@ -3189,6 +3199,11 @@
           {
             "type": "boolean",
             "description": "Boolean config to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
           }
         ]
       },
@@ -3215,6 +3230,11 @@
           {
             "type": "boolean",
             "description": "Boolean thread state to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
           }
         ]        
       },
@@ -3246,6 +3266,11 @@
           {
             "type": "boolean",
             "description": "Boolean interrupt to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
           }
         ]
       },
@@ -3272,6 +3297,11 @@
           {
             "type": "boolean",
             "description": "Boolean resume to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
           }
         ]
       }
