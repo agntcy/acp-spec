@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Agent Connect Protocol",
-    "version": "0.2.2"
+    "version": "0.2.3"
   },
   "tags": [
     {
@@ -1984,6 +1984,13 @@
                     "minimum": 0
                   }
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "description": "User's age"
+                
               }
             ]
           },
@@ -2008,6 +2015,13 @@
                   "format": "int32",
                   "minimum": 0
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "description": "User's age"
+                
               }
             ]
           },
@@ -2056,6 +2070,11 @@
                   "format": "int32",
                   "minimum": 0
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "description": "An integer value"                
               }
             ]
           },
@@ -2080,6 +2099,13 @@
                   "format": "int32",
                   "minimum": 0
                 }
+              },
+              {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0,
+                "description": "An integer value"
+                
               }
             ]
           },
@@ -3089,24 +3115,128 @@
         ]
       },
       "InputSchema": {
-        "type": "object",
         "title": "Input Schema",
-        "description": "The input to the agent. The schema is described in agent ACP descriptor under 'spec.thread_state'.'input'."
+        "description": "The input of the agent. The schema is described in agent ACP descriptor under 'spec.input'.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String input to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer input to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number input to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean input to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
+          }
+        ]
       },
       "OutputSchema": {
-        "type": "object",
         "title": "Output Schema",
-        "description": "The output of the agent. The schema is described in agent ACP descriptor under 'spec.output'."
+        "description": "The output of the agent. The schema is described in agent ACP descriptor under 'spec.output'.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String output to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer output to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number output to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean output to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
+          }
+        ]
       },
       "ConfigSchema": {
-        "type": "object",
         "title": "Config",
-        "description": "The configuration for this agent. The schema is described in agent ACP descriptor under 'spec.config'. If missing, default values are used."
+        "description": "The configuration for this agent. The schema is described in agent ACP descriptor under 'spec.config'. If missing, default values are used.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String config to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer config to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number config to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean config to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
+          }
+        ]
       },
       "ThreadStateSchema": {
-        "type": "object",
         "title": "Thread State Schema",
-        "description": "The thread state. The schema is described in agent ACP descriptor under 'spec.thread_state'."
+        "description": "The thread state. The schema is described in agent ACP descriptor under 'spec.thread_state'.",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String thread state to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer thread state to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number thread state to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean thread state to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
+          }
+        ]        
       },
       "StreamUpdateSchema": {
         "type": "object",
@@ -3114,14 +3244,66 @@
         "description": "An update in the SSE event streaming where streaming mode is set to custom. The schema is described in agent ACP descriptor under 'spec.custom_streaming_update'."
       },
       "InterruptPayloadSchema": {
-        "type": "object",
         "title": "Interrupt Payload",
-        "description": "This schema describes the interrupt payload. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`. The discriminator is the `interrupt_type`, while the schemas will be the ones defined in the agent spec under `interrupts`/`interrupt_payload` For example:          oneOf:\n  - $ref: '#/components/schemas/ApprovalInterruptPayload'\n  - $ref: '#/components/schemas/QuestionInterruptPayload'\ndiscriminator:\n  propertyName: interruput_type\n  mapping:\n    approval: '#/components/schemas/ApprovalInterruptPayload'\n    question: '#/components/schemas/QuestionInterruptPayload'"
+        "description": "This schema describes the interrupt payload. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`. The discriminator is the `interrupt_type`, while the schemas will be the ones defined in the agent spec under `interrupts`/`interrupt_payload` For example:          oneOf:\n  - $ref: '#/components/schemas/ApprovalInterruptPayload'\n  - $ref: '#/components/schemas/QuestionInterruptPayload'\ndiscriminator:\n  propertyName: interruput_type\n  mapping:\n    approval: '#/components/schemas/ApprovalInterruptPayload'\n    question: '#/components/schemas/QuestionInterruptPayload'",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String interrupt to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer interrupt to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number interrupt to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean interrupt to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
+          }
+        ]
       },
       "ResumePayloadSchema": {
-        "type": "object",
         "title": "Resume Payload Schema",
-        "description": "This schema describes the resume payload after an interrupt. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`. The discriminator is the `interrupt_type`, while the schemas will be those defined in the agent spec under `interrupts`/`resume_payload` For example:          oneOf:\n  - $ref: '#/components/schemas/ApprovalResumePayload'\n  - $ref: '#/components/schemas/QuestionResumePayload'\ndiscriminator:\n  propertyName: interrupt_type\n  mapping:\n    approval: '#/components/schemas/ApprovalResumePayload'\n    question: '#/components/schemas/QuestionResumePayload'"
+        "description": "This schema describes the resume payload after an interrupt. Actual schema describes a polimorphic object, which means a schema structured with `oneOf` and `discriminator`. The discriminator is the `interrupt_type`, while the schemas will be those defined in the agent spec under `interrupts`/`resume_payload` For example:          oneOf:\n  - $ref: '#/components/schemas/ApprovalResumePayload'\n  - $ref: '#/components/schemas/QuestionResumePayload'\ndiscriminator:\n  propertyName: interrupt_type\n  mapping:\n    approval: '#/components/schemas/ApprovalResumePayload'\n    question: '#/components/schemas/QuestionResumePayload'",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "This object contains an instance of an OpenAPI schema object, formatted as per the OpenAPI specs: https://spec.openapis.org/oas/v3.1.1.html#schema-object"
+          },
+          {
+            "type": "string",
+            "description": "String resume to the agent."
+          },
+          {
+            "type": "integer",
+            "description": "Integer resume to the agent."
+          },
+          {
+            "type":"number",
+            "description": "Number resume to the agent."
+          },
+          {
+            "type": "boolean",
+            "description": "Boolean resume to the agent."
+          },
+          {
+            "type": "array",
+            "description": "Array input to the agent.",
+            "items": {}
+          }
+        ]
       }
     }
   }
